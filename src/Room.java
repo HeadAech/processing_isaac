@@ -29,8 +29,14 @@ public class Room implements Cloneable {
     void addTile(Tile tile) {
         tiles.add(tile);
     }
+
     void setOrigin(Vector2 origin) {
         this.origin = origin;
+        for (Tile tile : tiles) {
+            if (tile.collidable)
+                tile.createCollisionShape(new Vector2(this.origin.x * width * 52 * scale.x,
+                        this.origin.y * height * 52 * scale.y));
+        }
     }
 
     ArrayList<Vector2> getDoorLocations() {

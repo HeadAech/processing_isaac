@@ -14,7 +14,7 @@ public class LevelGenerator {
 
     ArrayList<Tile> tiles = new ArrayList<>();
 
-    int maxRoomsOnFloor = 20;
+    int maxRoomsOnFloor = 15;
 
     ArrayList<Room> roomsOnFloor = new ArrayList<>();
 
@@ -35,6 +35,7 @@ public class LevelGenerator {
             char sign = 'D';
             String name = "Name";
             String spritePath = "path";
+            boolean collision = false;
 
             while (line != null) {
                 System.out.println(line);
@@ -53,12 +54,15 @@ public class LevelGenerator {
                     case 2:
                         spritePath = line;
                         break;
+                    case 3:
+                        collision = Objects.equals(line, "true");
                 }
 
                 i++;
 
-                if (i == 3){
+                if (i == 4){
                     Tile tile = new Tile(p, sign, name, spritePath);
+                    tile.collidable = collision;
                     tiles.add(tile);
                     i = 0;
                 }
@@ -110,6 +114,9 @@ public class LevelGenerator {
                             for(char c : line.toCharArray()){
                                 Tile tile =  new Tile(p, getTile(c));
                                 tile.setPosition(new Vector2(x,y));
+                                tile.collidable = getTile(c).collidable;
+                                if (tile.collidable)
+                                    tile.createCollisionShape(room.origin);
                                 if (tile.tileType == TileType.DOOR) {
                                     float rot = getDoorRotation(tile.position);
                                     tile.setRotation(rot);

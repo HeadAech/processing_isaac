@@ -32,7 +32,9 @@ public class Entity {
     int tintStartTime;
     int originalFillColor;
 
-    boolean showCollider = false;
+    boolean showCollider = true;
+
+    CollisionShape collisionShape;
 
     public Entity(PApplet p) {
         this.p = p;
@@ -56,6 +58,11 @@ public class Entity {
         this.transform.scale.y = scale;
     }
 
+    public void createCollisionShape() {
+        Vector2 size = new Vector2(sprite.getWidth() * transform.scale.x, sprite.getHeight() * transform.scale.y);
+        this.collisionShape = new CollisionShape(this.transform.position, size);
+    }
+
     public void setDrawCollider(boolean drawCollider) {
         this.showCollider = drawCollider;
     }
@@ -75,6 +82,7 @@ public class Entity {
             transform.position.y = p.constrain(transform.position.y, halfHeight, p.height - halfHeight);
 
         }
+        collisionShape.setPosition(transform.position);
         move();
 
         _display();
@@ -104,23 +112,11 @@ public class Entity {
         // Move the origin to the center of the sprite
         p.translate(-spriteWidth / 2, -spriteHeight / 2);
 
-        // Apply tint overlay if damaged
-        if (isTinted) {
-            if (p.millis() - tintStartTime > tintDuration) {
-                isTinted = false;  // Turn off the tint after duration
-            } else {
-                applyTintOverlay();
-            }
-        }
-
-
         p.shape(sprite);
-//        p.tint(0);
         p.popMatrix();
 
         if (showCollider) {
             drawCollider();
-
         }
     }
 
@@ -137,11 +133,11 @@ public class Entity {
         p.pushMatrix();
 
         // Move to the player's position
-        p.translate(transform.position.x, transform.position.y);
+        p.translate(collisionShape.position.x, collisionShape.position.y);
 
         // Get sprite dimensions
-        float colliderWidth = sprite.getWidth() * transform.scale.x;
-        float colliderHeight = sprite.getHeight() * transform.scale.y;
+        float colliderWidth = collisionShape.size.x;
+        float colliderHeight = collisionShape.size.y;
 
         // Set the collider to be centered on the player
         p.translate(-colliderWidth / 2, -colliderHeight / 2);

@@ -30,9 +30,12 @@ public class Main extends PApplet {
 
     Camera camera;
 
+    Physics physics;
+
     public void setup(){
         player = new Player(this, new Vector2(width/2, height/2));
         player.setScale(0.2f);
+        player.createCollisionShape();
 
         projectiles = new ArrayList<>();
 
@@ -51,6 +54,8 @@ public class Main extends PApplet {
 
         rocks = new ArrayList<>();
 
+        physics = new Physics();
+
         levelGenerator = new LevelGenerator(this);
         levelGenerator.prepareTiles();
         levelGenerator.prepareRooms();
@@ -60,6 +65,15 @@ public class Main extends PApplet {
         levelGenerator.generateFloor();
         println("-- Floor --");
         println(levelGenerator.roomsOnFloor.size());
+
+        ArrayList<CollisionShape> collisionShapes = new ArrayList<>();
+        for (Room room: levelGenerator.roomsOnFloor) {
+            for (Tile tile: room.tiles) {
+                if (tile.collisionShape != null)
+                    collisionShapes.add(tile.collisionShape);
+            }
+        }
+        physics.collisionShapes = collisionShapes;
         camera = new Camera(this);
 //        camera.zoom(0.1f);
 //        spawnRocks();
@@ -67,6 +81,8 @@ public class Main extends PApplet {
 
     public void draw(){
         drawBackground();
+
+        physics.checkCollisionForPlayerWithWalls(player);
 
         camera.apply();
         camera.x = player.transform.position.x;

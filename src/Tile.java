@@ -26,6 +26,12 @@ public class Tile implements Cloneable {
     float height = 52;
     Vector2 scale = new Vector2(1.5f, 1.5f);
 
+    boolean collidable = false;
+
+    CollisionShape collisionShape;
+
+    boolean drawCollider = true;
+
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
@@ -53,6 +59,46 @@ public class Tile implements Cloneable {
         this.textureImage = tile.textureImage;
     }
 
+    private void drawCollider() {
+        p.pushMatrix();
+
+        // Move to the player's position
+        p.translate(collisionShape.position.x, collisionShape.position.y);
+
+        // Get sprite dimensions
+        float colliderWidth = collisionShape.size.x;
+        float colliderHeight = collisionShape.size.y;
+
+        // Set the collider to be centered on the player
+        p.translate(-colliderWidth / 2, -colliderHeight / 2);
+
+        // Draw the rectangle representing the collider
+        p.noFill();
+        p.stroke(255, 0, 0); // Red color for visibility
+        p.rect(0, 0, colliderWidth, colliderHeight);
+
+        p.popMatrix();
+    }
+
+    public void setCollisionShape(CollisionShape collisionShape) {
+        this.collisionShape = collisionShape;
+    }
+
+    public void createCollisionShape(Vector2 origin) {
+        float xOffset = origin.x + 1;
+        float yOffset = origin.y + 1;
+        this.collisionShape = new CollisionShape(
+                new Vector2(position.x * width * scale.x,
+                         position.y * height * scale.y),
+                new Vector2(width * scale.x, height * scale.y)
+        );
+    }
+
+    public void setCollisionShapePosition(Vector2 origin) {
+        this.collisionShape.setPosition(new Vector2(position.x * width * scale.x + origin.x,
+                origin.y + position.y * height * scale.y));
+    }
+
     public void draw() {
         p.pushMatrix();
 
@@ -71,6 +117,9 @@ public class Tile implements Cloneable {
 
         // Reset scale (not necessary here since the transformations are done inside the pushMatrix/popMatrix block)
         p.popMatrix();
+
+        if (drawCollider && collisionShape != null)
+            drawCollider();
     }
 
     public String getName() {
@@ -121,6 +170,7 @@ public class Tile implements Cloneable {
             copy.spritePath = this.spritePath;
             copy.height = this.height;
             copy.width = this.width;
+            copy.collisionShape = collisionShape.clone();
             return copy;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
