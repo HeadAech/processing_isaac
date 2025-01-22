@@ -4,6 +4,7 @@ import processing.core.PApplet;
 import java.util.ArrayList;
 
 public class Main extends PApplet {
+
     public static void main(String[] args) {
         PApplet.main("Main");
     }
@@ -38,6 +39,10 @@ public class Main extends PApplet {
     Input inputManager;
 
     public void setup(){
+        windowTitle("The Binding of Isaac: Retarded");
+        frameRate(120);
+//        noSmooth();
+
         player = new Player(this, new Vector2((float) width /2, (float) height /2), "data/sprites/isaac/isaac_head_front.png");
         player.setScale(1.5f);
         player.createCollisionShape();
@@ -137,8 +142,6 @@ public class Main extends PApplet {
             int signY = Integer.signum((int) currentRoom.origin.y);
             camera.targetX = signX* (Math.abs(currentRoom.origin.x) * 2) * (currentRoom.width/2) * 52 * currentRoom.scale.x + width/2;
             camera.targetY = signY* (Math.abs(currentRoom.origin.y) * 2) * (currentRoom.height/2) * 52 * currentRoom.scale.y + height/2;
-            println("Camera target: ", camera.targetX, camera.targetY);
-            println("Current origin: ", currentRoom.origin.x, currentRoom.origin.y);
         }
 
 

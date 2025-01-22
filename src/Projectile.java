@@ -44,7 +44,8 @@ public class Projectile {
     }
 
     public void _update() {
-        this.transform.position = this.transform.position.plus(this.direction.multiply(shotSpeed));
+        if (!sprite.getChild("splash").isVisible())
+            this.transform.position = this.transform.position.plus(this.direction.multiply(shotSpeed));
 
         _display();
     }

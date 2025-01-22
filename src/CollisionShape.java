@@ -48,6 +48,11 @@ public class CollisionShape implements Cloneable {
         setBounds();
     }
 
+    public void setSize(Vector2 size) {
+        this.size = new Vector2(size);
+        setBounds();
+    }
+
     public Vector2 getPosition() {
         return position;
     }

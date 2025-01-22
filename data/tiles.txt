@@ -47,3 +47,8 @@ true
 floor
 floor.png
 false
+
+R
+rock
+rock.png
+true

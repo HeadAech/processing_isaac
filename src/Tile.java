@@ -3,10 +3,13 @@ import processing.core.PConstants;
 import processing.core.PImage;
 import processing.core.PShape;
 
+import java.util.ArrayList;
+
 enum TileType{
     DOOR, FLOOR,
     WALL_TOP, WALL_BOTTOM, WALL_LEFT, WALL_RIGHT,
     WALL_CORNER_TOP_LEFT, WALL_CORNER_TOP_RIGHT, WALL_CORNER_BOTTOM_LEFT, WALL_CORNER_BOTTOM_RIGHT,
+    ROCK,
 }
 
 public class Tile implements Cloneable {
@@ -32,6 +35,8 @@ public class Tile implements Cloneable {
 
     boolean drawCollider = true;
 
+    boolean destructible = false;
+
     Vector2 globalPosition = new Vector2(0, 0);
 
     Tile(PApplet p, char sign, String name, String spritePath) {
@@ -40,15 +45,7 @@ public class Tile implements Cloneable {
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = getTileType(sign);
         textureImage = p.loadImage(this.spritePath);
-//        shape = p.createShape();
-//        shape.beginShape();
-//        shape.texture(textureImage);
-//
-//        shape.vertex(0, 0);
-//        shape.vertex(100, 0);
-//        shape.vertex(100, 100);
-//        shape.vertex(0, 100);
-//        shape.endShape(p.CLOSE);
+        createTextureImage();
     }
 
     Tile (PApplet p, TileType type, String name, String spritePath) {
@@ -66,6 +63,22 @@ public class Tile implements Cloneable {
         this.position = tile.position;
         this.rotation = tile.rotation;
         this.textureImage = tile.textureImage;
+        createTextureImage();
+    }
+
+    public void createTextureImage() {
+        if (tileType == TileType.ROCK) {
+            ArrayList<Float> rotations = new ArrayList<>();
+            rotations.add(0.0f);
+            rotations.add(90.0f);
+            rotations.add(180.0f);
+            rotations.add(270.0f);
+            int randIdx = (int) p.random(rotations.size());
+            this.textureImage.resize(52, 52);
+            this.rotation = rotations.get(randIdx);
+            this.destructible = true;
+        }
+        p.noSmooth();
     }
 
     public void drawCollider() {
@@ -121,15 +134,12 @@ public class Tile implements Cloneable {
 
         // Set image mode to center to draw the image centered at position
         p.imageMode(PConstants.CENTER);
-
         // Draw the image, scaling it appropriately
         p.image(textureImage, 0, 0, width * scale.x, height * scale.y);
 
         // Reset scale (not necessary here since the transformations are done inside the pushMatrix/popMatrix block)
         p.popMatrix();
 
-//        if (drawCollider && collisionShape != null)
-//            drawCollider();
     }
 
     public String getName() {
@@ -160,6 +170,7 @@ public class Tile implements Cloneable {
             case 'Z' -> TileType.WALL_CORNER_BOTTOM_LEFT;
             case 'C' -> TileType.WALL_CORNER_BOTTOM_RIGHT;
             case '.' -> TileType.FLOOR;
+            case 'R' -> TileType.ROCK;
             default -> TileType.FLOOR;
         };
     }

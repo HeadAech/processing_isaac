@@ -131,6 +131,14 @@ public class LevelGenerator {
                                     wallTile.setRotation(rot);
                                     room.addTile(wallTile);
                                 }
+                                if (tile.tileType == TileType.ROCK) {
+//                                    tile.scale.x = 0.8f;
+//                                    tile.scale.y = 0.8f;
+                                    tile.collisionShape.setSize(new Vector2(tile.width * tile.scale.x, tile.height * tile.scale.y));
+                                    Tile floorTile = new Tile(p, getTile('.'));
+                                    floorTile.setPosition(tile.position);
+                                    room.addTile(floorTile);
+                                }
                                 room.addTile(tile);
                                 x++;
                             }
