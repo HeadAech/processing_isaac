@@ -25,13 +25,14 @@ public class Camera {
         zoom *= factor;
     }
 
-    public void update() {
-
+    public void update(float deltaTime) {
+        x = Util.lerp(x, targetX, 8 * deltaTime);
+        y = Util.lerp(y, targetY, 8 * deltaTime);
     }
 
     // Apply the camera transformations
     void apply() {
-        p.translate(p.width / 2, p.height / 2);  // Move the origin to the center of the screen
+        p.translate(p.width/2, p.height/2);  // Move the origin to the center of the screen
         p.scale(zoom);  // Apply zoom
         p.translate(-x, -y);  // Move the view to the camera's position
     }

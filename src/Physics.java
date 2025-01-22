@@ -8,10 +8,12 @@ public class Physics {
     public Physics() {}
 
     float currentTime = 0;
-    float triggerCooldown = 2;
+    float triggerCooldown = 1;
 
     public void checkCollisionForPlayerWithWalls(Entity player, float deltaTime) {
         ArrayList<CollisionShape> collidingWith = new ArrayList<>();
+        if (currentTime <= triggerCooldown)
+            currentTime += deltaTime;
 
         for (CollisionShape collisionShape : collisionShapes) {
             boolean collision = false;
@@ -19,10 +21,10 @@ public class Physics {
                 collision = true;
             }
 
-            if (collision && collisionShape.isTrigger()) {
+            if (collision && collisionShape.isTrigger() &&  currentTime >= triggerCooldown) {
                 if (!collisionShape.triggered) {
-                    Signals.EnteredDoor.emit(collisionShape.position);
                     collisionShape.triggered = true;
+                    Signals.EnteredDoor.emit(collisionShape.position);
                     currentTime = 0;
                     collision = false;
                 }

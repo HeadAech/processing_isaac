@@ -9,7 +9,7 @@ public class Entity {
     public Transform transform = new Transform();
 
     public float health = 100;
-    public float speed = 200;
+    public float speed = 100;
 
 
     public float damage = 10;
@@ -239,5 +239,10 @@ public class Entity {
         health = 0;
         alive = false;
         p.println("DEAD");
+    }
+
+    public void resetVelocity() {
+        velocity.x = 0;
+        velocity.y = 0;
     }
 }

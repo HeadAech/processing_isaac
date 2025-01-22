@@ -97,6 +97,11 @@ public class Room implements Cloneable {
         return null;
     }
 
+    public Vector2 getGlobalPositionOfOrigin() {
+        float globalX = origin.x * scale.x * width;
+        float globalY = origin.y * scale.y * height;
+        return new Vector2(globalX, globalY);
+    }
 
     // Override clone() to perform a deep copy
     @Override

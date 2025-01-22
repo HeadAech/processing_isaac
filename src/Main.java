@@ -103,8 +103,14 @@ public class Main extends PApplet {
                         Room nextRoom = levelGenerator.roomsOnFloor.get(currentRoomIdx);
                         Tile doorTile = nextRoom.getDoorTile(doorLocationInNextRoom.x, doorLocationInNextRoom.y);
                         Vector2 globalPos = doorTile.globalPosition;
-                        player.transform.position.x = globalPos.x + ((doorTile.width + 100) * originDir.x);
-                        player.transform.position.y = globalPos.y + ((doorTile.height + 100) * originDir.y);
+                        float offsetFromDoor = 25;
+                        if (originDir.y == 1 || originDir.y == -1) {
+                            player.transform.position.y = globalPos.y + ((doorTile.height + offsetFromDoor) * originDir.y);
+                            player.resetVelocity();
+                        } else {
+                            player.transform.position.x = globalPos.x + ((doorTile.width + offsetFromDoor) * originDir.x);
+                            player.resetVelocity();
+                        }
                     }
                 }
             }
@@ -123,11 +129,16 @@ public class Main extends PApplet {
 
         physics.checkCollisionForPlayerWithWalls(player, deltaTime);
 
+        camera.update(deltaTime);
         camera.apply();
         Room currentRoom = levelGenerator.roomsOnFloor.get(currentRoomIdx);
         if (currentRoom != null) {
-            camera.x = currentRoom.origin.x * currentRoom.width * 52 * currentRoom.scale.x;
-            camera.y = currentRoom.origin.y * currentRoom.height * 52 * currentRoom.scale.y;
+            int signX = Integer.signum((int) currentRoom.origin.x);
+            int signY = Integer.signum((int) currentRoom.origin.y);
+            camera.targetX = signX* (Math.abs(currentRoom.origin.x) * 2) * (currentRoom.width/2) * 52 * currentRoom.scale.x + width/2;
+            camera.targetY = signY* (Math.abs(currentRoom.origin.y) * 2) * (currentRoom.height/2) * 52 * currentRoom.scale.y + height/2;
+            println("Camera target: ", camera.targetX, camera.targetY);
+            println("Current origin: ", currentRoom.origin.x, currentRoom.origin.y);
         }
 
 
