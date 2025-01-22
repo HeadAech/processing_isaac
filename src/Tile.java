@@ -32,6 +32,8 @@ public class Tile implements Cloneable {
 
     boolean drawCollider = true;
 
+    Vector2 globalPosition = new Vector2(0, 0);
+
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
@@ -49,6 +51,13 @@ public class Tile implements Cloneable {
 //        shape.endShape(p.CLOSE);
     }
 
+    Tile (PApplet p, TileType type, String name, String spritePath) {
+        this.p = p;
+        this.name = name;
+        this.spritePath = "data/sprites/" + spritePath;
+        this.tileType = type;
+    }
+
     Tile(PApplet p, Tile tile) {
         this.p = p;
         this.name = tile.name;
@@ -59,24 +68,15 @@ public class Tile implements Cloneable {
         this.textureImage = tile.textureImage;
     }
 
-    private void drawCollider() {
+    public void drawCollider() {
         p.pushMatrix();
 
         // Move to the player's position
-        p.translate(collisionShape.position.x, collisionShape.position.y);
-
-        // Get sprite dimensions
-        float colliderWidth = collisionShape.size.x;
-        float colliderHeight = collisionShape.size.y;
-
-        // Set the collider to be centered on the player
-        p.translate(-colliderWidth / 2, -colliderHeight / 2);
-
-        // Draw the rectangle representing the collider
         p.noFill();
-        p.stroke(255, 0, 0); // Red color for visibility
-        p.rect(0, 0, colliderWidth, colliderHeight);
+        p.stroke(255,0,0);
+        p.rect(collisionShape.left, collisionShape.top, collisionShape.size.x, collisionShape.size.y);
 
+        p.noStroke();
         p.popMatrix();
     }
 
@@ -84,19 +84,29 @@ public class Tile implements Cloneable {
         this.collisionShape = collisionShape;
     }
 
-    public void createCollisionShape(Vector2 origin) {
+    public void createCollisionShape(Vector2 origin, Vector2 size) {
         float xOffset = origin.x + 1;
         float yOffset = origin.y + 1;
+        Vector2 colSize = size == null ? new Vector2(width, height) : new Vector2(size);
         this.collisionShape = new CollisionShape(
                 new Vector2(position.x * width * scale.x,
                          position.y * height * scale.y),
-                new Vector2(width * scale.x, height * scale.y)
+                new Vector2(colSize.x * scale.x, colSize.y * scale.y)
         );
     }
 
-    public void setCollisionShapePosition(Vector2 origin) {
-        this.collisionShape.setPosition(new Vector2(position.x * width * scale.x + origin.x,
-                origin.y + position.y * height * scale.y));
+    public void setCollisionShapePosition(Vector2 origin, Vector2 roomScale) {
+
+        Vector2 globalPos = getGlobalPosition(origin, roomScale);
+        this.collisionShape.setPosition(new Vector2(globalPos.x, globalPos.y));
+    }
+
+    public Vector2 getGlobalPosition(Vector2 roomOrigin, Vector2 roomScale) {
+        // Calculate the global position by combining the room's transformation with the tile's local transformation
+        float globalX = roomOrigin.x * roomScale.x * width * scale.x + position.x * width * scale.x;
+        float globalY = roomOrigin.y * roomScale.y * height * scale.y + position.y * height * scale.y;
+
+        return new Vector2(globalX, globalY);
     }
 
     public void draw() {
@@ -118,8 +128,8 @@ public class Tile implements Cloneable {
         // Reset scale (not necessary here since the transformations are done inside the pushMatrix/popMatrix block)
         p.popMatrix();
 
-        if (drawCollider && collisionShape != null)
-            drawCollider();
+//        if (drawCollider && collisionShape != null)
+//            drawCollider();
     }
 
     public String getName() {
@@ -159,7 +169,7 @@ public class Tile implements Cloneable {
     public Tile clone() {
         try {
             Tile copy = (Tile) super.clone();  // Shallow copy of object
-            copy.position = new Vector2(position.x, position.y);
+            copy.position = this.position != null ? new Vector2(position.x, position.y) : new Vector2(0,0);
             copy.rotation = rotation;
             copy.scale = new Vector2(scale.x, scale.y);
             copy.textureImage = textureImage;
@@ -170,7 +180,10 @@ public class Tile implements Cloneable {
             copy.spritePath = this.spritePath;
             copy.height = this.height;
             copy.width = this.width;
-            copy.collisionShape = collisionShape.clone();
+            if (collidable && collisionShape != null) {
+                copy.collisionShape = collisionShape.clone();
+            }
+            copy.collidable = collidable;
             return copy;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();

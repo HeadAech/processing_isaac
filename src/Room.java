@@ -32,10 +32,11 @@ public class Room implements Cloneable {
 
     void setOrigin(Vector2 origin) {
         this.origin = origin;
+        PApplet.println(origin.x, origin.y);
         for (Tile tile : tiles) {
+            tile.globalPosition = tile.getGlobalPosition(this.origin, new Vector2(width, height));
             if (tile.collidable)
-                tile.createCollisionShape(new Vector2(this.origin.x * width * 52 * scale.x,
-                        this.origin.y * height * 52 * scale.y));
+                tile.setCollisionShapePosition(new Vector2(this.origin.x, this.origin.y), new Vector2(this.width, this.height));
         }
     }
 
@@ -60,8 +61,40 @@ public class Room implements Cloneable {
 
     public void setTile(float x, float y, Tile tile) {
         Tile foundTile = getTile(x, y);
-        tiles.remove(foundTile);
-        tiles.add(tile);
+        int index = tiles.indexOf(foundTile);
+        tiles.set(index, tile);
+    }
+
+    public Tile getDoorTile(float x, float y) {
+        for (Tile tile : tiles) {
+            if (tile.position.x == x && tile.position.y == y) {
+                if (tile.tileType == TileType.DOOR) {
+                    return tile;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void replaceDoor(float x, float y, Tile tile) {
+        Tile foundTile = getDoorTile(x, y);
+        int index = tiles.indexOf(foundTile);
+        tile.createCollisionShape(this.origin, null);
+        tile.globalPosition = tile.getGlobalPosition(this.origin, new Vector2(width, height));
+        if (tile.collidable)
+            tile.setCollisionShapePosition(new Vector2(this.origin.x, this.origin.y), new Vector2(this.width, this.height));
+        tiles.set(index, tile);
+    }
+
+    public Vector2 getTilePositionByCollision(Vector2 position) {
+        for (Tile tile : tiles) {
+            if (tile.collisionShape != null) {
+                if (Vector2.areEqual(tile.collisionShape.position, position)) {
+                    return tile.position;
+                }
+            }
+        }
+        return null;
     }
 
 

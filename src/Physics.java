@@ -7,16 +7,30 @@ public class Physics {
 
     public Physics() {}
 
-    public void checkCollisionForPlayerWithWalls(Entity player) {
+    float currentTime = 0;
+    float triggerCooldown = 2;
+
+    public void checkCollisionForPlayerWithWalls(Entity player, float deltaTime) {
         ArrayList<CollisionShape> collidingWith = new ArrayList<>();
+
         for (CollisionShape collisionShape : collisionShapes) {
             boolean collision = false;
             if (isCollidingWithBoxShape(player.collisionShape, collisionShape)) {
                 collision = true;
             }
 
+            if (collision && collisionShape.isTrigger()) {
+                if (!collisionShape.triggered) {
+                    Signals.EnteredDoor.emit(collisionShape.position);
+                    collisionShape.triggered = true;
+                    currentTime = 0;
+                    collision = false;
+                }
+            }
+
             if (collision) {
-                collidingWith.add(collisionShape);
+                if (!collidingWith.contains(collisionShape))
+                    collidingWith.add(collisionShape);
             }
         }
 
@@ -24,6 +38,7 @@ public class Physics {
             applySeparationToPlayer(player, collidingWith);
         }
 
+        collidingWith.clear();
     }
 
     private Vector2 getSeparationVectorBox(CollisionShape shape1, CollisionShape shape2) {
@@ -66,17 +81,42 @@ public class Physics {
         }
 
         Vector2 s = new Vector2(0, 0);
-        s = combineSeparationVectors(ss);
+        if (ss.size() > 2)
+            s = combineSeparationVectors(ss);
+        else
+            s = getCombinedSeparationVector(ss);
 
-        player.targetPosition.x += s.x;
-        player.targetPosition.y += s.y;
+        player.transform.position.x += s.x;
+        player.transform.position.y += s.y;
     }
 
     private Vector2 combineSeparationVectors(ArrayList<Vector2> separationVectors) {
         Vector2 combinedVector = new Vector2(0, 0);
 
         for (Vector2 vector : separationVectors) {
-            combinedVector = combinedVector.plus(vector);
+            combinedVector.x += vector.x;
+            combinedVector.y += vector.y;
+        }
+
+        return combinedVector;
+    }
+
+    private Vector2 getCombinedSeparationVector(ArrayList<Vector2> separationVectors) {
+        Vector2 combinedVector = new Vector2(0, 0);
+
+        for (Vector2 vector : separationVectors) {
+            if (Math.abs(vector.x) > Math.abs(combinedVector.x)) {
+                combinedVector.x = vector.x;
+            }
+            if (Math.abs(vector.y) > Math.abs(combinedVector.y)) {
+                combinedVector.y = vector.y;
+            }
+        }
+
+        if (Math.abs(combinedVector.x) < Math.abs(combinedVector.y)) {
+            combinedVector.x = 0;
+        } else if (Math.abs(combinedVector.x) > Math.abs(combinedVector.y)) {
+            combinedVector.y = 0;
         }
 
         return combinedVector;

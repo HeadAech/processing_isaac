@@ -31,8 +31,8 @@ public class CollisionShape implements Cloneable {
     }
 
     public CollisionShape(Vector2 position, Vector2 size) {
-        this.position = position;
-        this.size = size;
+        this.position = new Vector2(position);
+        this.size = new Vector2(size);
         setBounds();
     }
 
@@ -44,7 +44,7 @@ public class CollisionShape implements Cloneable {
     }
 
     public void setPosition(Vector2 position) {
-        this.position = position;
+        this.position = new Vector2(position);
         setBounds();
     }
 
@@ -79,6 +79,33 @@ public class CollisionShape implements Cloneable {
     public void setTriggerType(TriggerType triggerType) {
         this.trigger = true;
         this.triggerType = triggerType;
+    }
+
+
+    float currentTime = 0;
+    float cooldown = 1;
+    public void updateTrigger(float delta) {
+        if (!trigger) return;
+
+        if (triggered) {
+            currentTime += delta;
+            if (currentTime >= cooldown) {
+                triggered = false;
+                currentTime = 0;
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "CollisionShape [position=" + position.x + ", " + position.y  +
+                ", size=" + size +
+                ", type=" + type +
+                ", left=" + left +
+                ", right=" + right +
+                ", top=" + top +
+                ", bottom=" + bottom +
+                "]";
     }
 
     @Override

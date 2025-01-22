@@ -6,6 +6,8 @@ public class Camera {
     float x, y;  // Camera position
     float zoom = 1;  // Zoom level
 
+    float targetX, targetY;
+
     Camera(PApplet p) {
         this.p = p;
         x = 0;
@@ -21,6 +23,10 @@ public class Camera {
     // Zoom the camera by a factor
     void zoom(float factor) {
         zoom *= factor;
+    }
+
+    public void update() {
+
     }
 
     // Apply the camera transformations

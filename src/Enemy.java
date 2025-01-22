@@ -9,29 +9,29 @@ public class Enemy extends Entity {
     private int lastAttackTime = 0;    // stores the time of the last attack
 
 
-    public Enemy(PApplet p, Entity player) {
-        super(p);
+    public Enemy(PApplet p, Entity player, String spritePath) {
+        super(p, spritePath);
         this.player = player;
         setEnemySprite();
         enemyStats();
     }
 
-    public Enemy(PApplet p, Vector2 position, Vector2 playerPosition) {
-        super(p, position);
+    public Enemy(PApplet p, Vector2 position, Vector2 playerPosition, String spritePath) {
+        super(p, position, spritePath);
         setEnemySprite();
         enemyStats();
     }
 
-    public Enemy(PApplet p, Vector2 position, Entity player) {
-        super(p, position);
+    public Enemy(PApplet p, Vector2 position, Entity player, String spritePath) {
+        super(p, position, spritePath);
         this.player = player;
         setEnemySprite();
         enemyStats();
     }
 
     private void setEnemySprite() {
-        sprite.getChild("body").setVisible(true);
-        sprite.getChild("hat").setVisible(false);
+//        sprite.getChild("body").setVisible(true);
+//        sprite.getChild("hat").setVisible(false);
     }
 
     private void enemyStats() {
@@ -40,10 +40,10 @@ public class Enemy extends Entity {
     }
 
     @Override
-    public void _update() {
-        super.direction = player.transform.position.minus(transform.position).normalized();
+    public void _update(float deltaTime) {
+        super.acceleration = player.transform.position.minus(transform.position).normalized();
         isCollidingWithPlayer();
-        super._update();
+        super._update(deltaTime);
     }
 
     public void isCollidingWithPlayer() {
