@@ -1,19 +1,43 @@
 import processing.core.PApplet;
+import processing.core.PImage;
 
 public class Interface {
 
     PApplet p;
 
+    PImage heartsSpriteSheet;
+
     int score = 0;
 
-    Interface(PApplet p) {
+    int heartTileWidth = 32;
+    int heartTileHeight = 32;
+
+    PImage emptyRedHeart;
+    PImage fullRedHeart;
+    PImage halfRedHeart;
+
+    Entity player;
+
+
+    Interface(PApplet p, PImage heartsSpriteSheet) {
         this.p = p;
+        this.heartsSpriteSheet = heartsSpriteSheet;
+
+        fullRedHeart = getTile(0, 0);
+        fullRedHeart.resize(heartTileWidth, heartTileHeight);
+        halfRedHeart = getTile(1, 0);
+        emptyRedHeart = getTile(2, 0);
     }
 
-    float playerHealth;
 
-    public void setPlayerHealth(float v) {
-        playerHealth = v;
+    private PImage getTile(int x, int y) {
+        int sx = x * heartTileWidth;
+        int sy = y * heartTileHeight;
+        return heartsSpriteSheet.get(sx, sy, heartTileWidth, heartTileHeight);
+    }
+
+    public void setPlayer(Entity player) {
+        this.player = player;
     }
 
     public void _update() {
@@ -25,24 +49,51 @@ public class Interface {
         p.textAlign(p.LEFT);
         p.pushMatrix();
         p.color(0);
-        p.fill(0);
-        p.textSize(32);
-        p.text("HP: " + p.str((int)playerHealth), 0, p.textAscent());
-        p.text("Score: " + p.str(score), 0, p.textAscent() * 2);
+        p.fill(255);
+
+        int x = 30;
+        int y = 30;
+        p.noSmooth();
+        p.scale(1.5f);
+        p.imageMode(PApplet.CENTER);
+        int fullHearts = (int) (player.health / 2);
+        int halfHearts = player.health % 2 == 0 ? 0 : 1;
+        int emptyHearts = (int) ((player.maxHealth - player.health) / 2) ;
+        for (int i = 0; i < fullHearts; i++) {
+            p.image(fullRedHeart, x, y, heartTileWidth, heartTileHeight);
+            if (x > 6 * (heartTileWidth - 5)) {
+                y += heartTileHeight - 5;
+                x = 5;
+            }
+            x += heartTileWidth - 5;
+
+        }
+        for (int i = 0; i < halfHearts; i++) {
+            p.image(halfRedHeart, x, y, heartTileWidth, heartTileHeight);
+            if (x > 6 * (heartTileWidth - 5)) {
+                y += heartTileHeight - 5;
+                x = 5;
+            }
+            x += heartTileWidth - 5;
+        }
+        for (int i = 0; i < emptyHearts; i++) {
+            p.image(emptyRedHeart, x, y, heartTileWidth, heartTileHeight);
+            if (x > 6 * (heartTileWidth - 5)) {
+                y += heartTileHeight - 5;
+                x = 5;
+            }
+            x += heartTileWidth - 5;
+        }
 
         String fps = "fps: " + p.round(p.frameRate);
         p.text(fps, p.width - p.textWidth(fps) - 5, p.height - p.textAscent());
 
-        if (playerHealth <= 0) {
-            p.color(230, 10, 0);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.text("GAME OVER", p.width / 2, p.height / 2);
-            p.text("SCORE   " + score, p.width / 2, p.height / 2 + 20 + p.textAscent());
-
-        }
-
         p.popMatrix();
     }
 
+
+    void drawHearts(PImage heart) {
+
+    }
 
 }

@@ -1,5 +1,6 @@
 
 import processing.core.PApplet;
+import processing.core.PImage;
 
 import java.util.ArrayList;
 
@@ -38,6 +39,8 @@ public class Main extends PApplet {
 
     Input inputManager;
 
+    PImage heartsSpritesheet;
+
     public void setup(){
         windowTitle("The Binding of Isaac: Retarded");
         frameRate(120);
@@ -56,9 +59,10 @@ public class Main extends PApplet {
 
 //        enemies.add(enemy);
 
-        ui = new Interface(this);
+        heartsSpritesheet = loadImage("data/sprites/spritesheet/hearts.png");
+        ui = new Interface(this, heartsSpritesheet);
 
-        ui.setPlayerHealth(player.health);
+        ui.setPlayer(player);
 
         spawner = new Spawner(this);
 
@@ -191,8 +195,10 @@ public class Main extends PApplet {
 
         }
 
-        ui.setPlayerHealth(player.health);
+        pushMatrix();
+        translate(camera.x - width/2, camera.y - height/2);
         ui._update();
+        popMatrix();
 
 
         if (!player.alive) {
@@ -260,6 +266,10 @@ public class Main extends PApplet {
 
         if (key == '+' || key == '=') {
             camera.zoom(1.1f);
+        }
+
+        if (key == 'p') {
+            player.damage(1);
         }
 
         if (key == '§') {

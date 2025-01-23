@@ -18,8 +18,9 @@ public class Player extends Entity {
 
     private void setPlayerStats() {
         super.damage = 20;
+        super.health = 20;
+        super.maxHealth = health;
         canGoOutOfBounds = true;
-
     }
 
     private void setPlayerSprite() {

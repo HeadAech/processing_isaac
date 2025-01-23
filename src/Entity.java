@@ -9,6 +9,7 @@ public class Entity {
     public Transform transform = new Transform();
 
     public float health = 100;
+    public float maxHealth = 100;
     public float speed = 100;
 
 
@@ -51,6 +52,7 @@ public class Entity {
         this.targetPosition = transform.position;
         this.spritePath = spritePath;
         this.sprite = p.loadImage(spritePath);
+        this.maxHealth = health;
 //        loadSprite();
     }
 
@@ -59,6 +61,7 @@ public class Entity {
         this.transform.position = position;
         this.targetPosition = position;
         this.spritePath = spritePath;
+        this.maxHealth = health;
         sprite = p.loadImage(spritePath);
 //        loadSprite();
     }
