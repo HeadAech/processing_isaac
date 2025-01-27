@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="vorbisspi-1.0.3.3">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/vorbisspi-1.0.3.3.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/tritonus-share-0.3.7.4.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/mp3spi-1.9.5.4.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/jsyn-17.1.0.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/jorbis-0.0.17.4.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/jportaudio.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Processing/libraries/sound/library/jlayer-1.0.1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

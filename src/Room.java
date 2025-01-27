@@ -71,6 +71,18 @@ public class Room implements Cloneable {
         }
     }
 
+    public void update(float deltaTime) {
+        for (Tile tile : tiles) {
+            if (tile.destructible) {
+                if (tile.health <= 0) {
+                    tiles.remove(tile);
+                    Signals.UpdateCollisionShapesForPhysics.emit(null);
+                    break;
+                }
+            }
+        }
+    }
+
     ArrayList<Vector2> getDoorLocations() {
         ArrayList<Vector2> doorLocations = new ArrayList<>();
         for (Tile tile : tiles) {

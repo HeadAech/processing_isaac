@@ -4,16 +4,20 @@ import processing.core.PImage;
 import processing.core.PShape;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 enum TileType{
     BOSS_ROOM_DOOR, DOOR, FLOOR,
     WALL_TOP, WALL_BOTTOM, WALL_LEFT, WALL_RIGHT,
     WALL_CORNER_TOP_LEFT, WALL_CORNER_TOP_RIGHT, WALL_CORNER_BOTTOM_LEFT, WALL_CORNER_BOTTOM_RIGHT,
     ROCK,
+    POOP,
 }
 
 public class Tile implements Cloneable {
     PApplet p;
+
+    UUID uuid = UUID.randomUUID();
 
     String name;
     String spritePath;
@@ -39,6 +43,8 @@ public class Tile implements Cloneable {
 
     Vector2 globalPosition = new Vector2(0, 0);
 
+    float health = 10;
+
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
@@ -46,6 +52,7 @@ public class Tile implements Cloneable {
         this.tileType = getTileType(sign);
         textureImage = p.loadImage(this.spritePath);
         createTextureImage();
+        onProjectileEnteredCollisionShape();
     }
 
     Tile (PApplet p, TileType type, String name, String spritePath) {
@@ -53,6 +60,7 @@ public class Tile implements Cloneable {
         this.name = name;
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = type;
+        onProjectileEnteredCollisionShape();
     }
 
     Tile(PApplet p, Tile tile) {
@@ -64,6 +72,21 @@ public class Tile implements Cloneable {
         this.rotation = tile.rotation;
         this.textureImage = tile.textureImage;
         createTextureImage();
+        onProjectileEnteredCollisionShape();
+    }
+
+    private void onProjectileEnteredCollisionShape() {
+        Signals.ProjectileEnteredCollisionShape.connect(uuid -> {
+            if (collisionShape == null) return;
+            if (collisionShape.uuid.equals(uuid)) {
+                if (destructible)
+                    this.damage(2);
+            }
+        });
+    }
+
+    public void damage(float damage) {
+        health -= damage;
     }
 
     public void createTextureImage() {
@@ -76,6 +99,10 @@ public class Tile implements Cloneable {
             int randIdx = (int) p.random(rotations.size());
             this.textureImage.resize(52, 52);
             this.rotation = rotations.get(randIdx);
+            this.destructible = true;
+        }
+        if (tileType == TileType.POOP) {
+            this.textureImage.resize(32,32);
             this.destructible = true;
         }
         p.noSmooth();
@@ -135,7 +162,11 @@ public class Tile implements Cloneable {
         // Set image mode to center to draw the image centered at position
         p.imageMode(PConstants.CENTER);
         // Draw the image, scaling it appropriately
-        p.image(textureImage, 0, 0, width * scale.x, height * scale.y);
+        if (tileType == TileType.POOP) {
+            p.image(textureImage, 0, 0, textureImage.width * scale.x, textureImage.height * scale.y);
+        }else {
+            p.image(textureImage, 0, 0, width * scale.x, height * scale.y);
+        }
 
         // Reset scale (not necessary here since the transformations are done inside the pushMatrix/popMatrix block)
         p.popMatrix();
@@ -178,6 +209,7 @@ public class Tile implements Cloneable {
             case 'C' -> TileType.WALL_CORNER_BOTTOM_RIGHT;
             case '.' -> TileType.FLOOR;
             case 'R' -> TileType.ROCK;
+            case 'P' -> TileType.POOP;
             default -> TileType.FLOOR;
         };
     }
@@ -202,6 +234,9 @@ public class Tile implements Cloneable {
                 copy.collisionShape = collisionShape.clone();
             }
             copy.collidable = collidable;
+            copy.destructible = this.destructible;
+            copy.uuid = UUID.randomUUID();
+            copy.health = health;
             return copy;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();

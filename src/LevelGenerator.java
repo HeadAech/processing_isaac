@@ -131,10 +131,11 @@ public class LevelGenerator {
                                     wallTile.setRotation(rot);
                                     room.addTile(wallTile);
                                 }
-                                if (tile.tileType == TileType.ROCK) {
+                                if (tile.tileType == TileType.ROCK || tile.tileType == TileType.POOP) {
 //                                    tile.scale.x = 0.8f;
 //                                    tile.scale.y = 0.8f;
                                     tile.collisionShape.setSize(new Vector2(tile.width * tile.scale.x, tile.height * tile.scale.y));
+                                    tile.destructible = true;
                                     Tile floorTile = new Tile(p, getTile('.'));
                                     floorTile.setPosition(tile.position);
                                     room.addTile(floorTile);
@@ -399,6 +400,8 @@ public class LevelGenerator {
             newTile.setRotation(tile.rotation);
             newTile.collidable = tile.collidable;
             newTile.textureImage = tile.textureImage;
+            newTile.destructible = tile.destructible;
+            newTile.health = tile.health;
             if (tile.collidable) {
                 newTile.createCollisionShape(uniqueRoom.origin, null);
                 if (tile.tileType == TileType.DOOR) {

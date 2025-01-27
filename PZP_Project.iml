@@ -11,5 +11,7 @@
     <orderEntry type="library" name="jogl-all" level="project" />
     <orderEntry type="library" name="gluegen-rt" level="project" />
     <orderEntry type="library" name="library" level="project" />
+    <orderEntry type="library" name="sound" level="project" />
+    <orderEntry type="library" name="vorbisspi-1.0.3.3" level="project" />
   </component>
 </module>

@@ -1,7 +1,12 @@
 import processing.core.PApplet;
+import processing.core.PImage;
 import processing.core.PShape;
 
+import java.util.UUID;
+
 public class Projectile {
+
+    UUID uuid = UUID.randomUUID();
 
     PApplet p;
 
@@ -18,13 +23,20 @@ public class Projectile {
     int destroyStart = 0;
     float destroyEnd = 300;
 
-    private PShape sprite;
+    PImage sprite;
+    PImage spritesheet;
+
+    Vector2 frameSize = new Vector2(32, 32);
+
+    CollisionShape collisionShape;
 
     public Projectile(PApplet p, Vector2 startPosition, Vector2 direction) {
         this.p = p;
         this.transform.position = startPosition;
         this.direction = direction;
         loadSprite();
+        createCollisionShape();
+
     }
 
     public Projectile(PApplet p, Vector2 startPosition, Vector2 direction, float damage, float shotSpeed) {
@@ -34,88 +46,59 @@ public class Projectile {
         this.damage = damage;
         this.shotSpeed = shotSpeed;
         loadSprite();
+        createCollisionShape();
+    }
+
+    public void createCollisionShape() {
+        Vector2 size = new Vector2(sprite.width * transform.scale.x, sprite.height * transform.scale.y);
+//        Vector2 size = new Vector2(300, 300);
+        Vector2 pos = new Vector2(transform.position.x - size.x/2, transform.position.y - size.y/2);
+        this.collisionShape = new CollisionShape(pos, size);
+
+    }
+
+    private PImage getTile(int x, int y) {
+        int sx = (int) (x * frameSize.x);
+        int sy = (int) (y * frameSize.y);
+        return spritesheet.get(sx, sy, (int) frameSize.x, (int) frameSize.y);
     }
 
     private void loadSprite() {
-        sprite = p.loadShape("data/bullet.svg");
-        sprite.getChild("splash").setVisible(false);
-        sprite.getChild("body").setVisible(true);
+        p.imageMode(PApplet.CENTER);
+        spritesheet = p.loadImage("data/sprites/spritesheet/tears_balloon.png");
+        sprite = getTile(4, 1);
+//        this.sprite = spritesheet.get();
         this.spawnTime = p.millis();
     }
 
     public void _update() {
-        if (!sprite.getChild("splash").isVisible())
-            this.transform.position = this.transform.position.plus(this.direction.multiply(shotSpeed));
-
+        this.transform.position = this.transform.position.plus(this.direction.multiply(shotSpeed));
+        this.collisionShape.setPosition(transform.position);
         _display();
     }
 
     public void _display() {
         p.pushMatrix();
 
-        p.translate(transform.position.x, transform.position.y);
-        p.scale(transform.scale.x, transform.scale.y);
-        p.translate(-sprite.getWidth() / 2, -sprite.getHeight() / 2);
-        p.shape(sprite);
+        p.image(sprite, transform.position.x + sprite.width/2, transform.position.y + sprite.height/2);
 
         p.popMatrix();
 //        drawCollider();
+        drawCollider();
 
     }
 
-    private void drawCollider() {
+    public void drawCollider() {
         p.pushMatrix();
 
-        // Move to the player's position
-        p.translate(transform.position.x, transform.position.y);
-
-        // Get sprite dimensions
-        float colliderWidth = sprite.getWidth() * transform.scale.x;
-        float colliderHeight = sprite.getHeight() * transform.scale.y;
-
-        // Set the collider to be centered on the player
-        p.translate(-colliderWidth / 2, -colliderHeight / 2);
-
-        // Draw the rectangle representing the collider
         p.noFill();
-        p.stroke(255, 0, 0); // Red color for visibility
-        p.rect(0, 0, colliderWidth, colliderHeight);
-
+        p.stroke(255,0,0);
+        p.rect(collisionShape.left, collisionShape.top, collisionShape.size.x, collisionShape.size.y);
+        p.noStroke();
         p.popMatrix();
     }
 
-    public boolean isColliding(Entity other) {
-        // Calculate the collider's dimensions based on the scaled sprite of this entity
-        float colliderWidth = this.sprite.getWidth() * this.transform.scale.x;
-        float colliderHeight = this.sprite.getHeight() * this.transform.scale.y;
 
-        // Calculate the edges of this entity's collider
-        float thisLeft = this.transform.position.x - colliderWidth / 2;
-        float thisRight = this.transform.position.x + colliderWidth / 2;
-        float thisTop = this.transform.position.y - colliderHeight / 2;
-        float thisBottom = this.transform.position.y + colliderHeight / 2;
-
-        // Calculate the collider's dimensions for the other entity
-        float otherColliderWidth = other.sprite.width * other.transform.scale.x;
-        float otherColliderHeight = other.sprite.height * other.transform.scale.y;
-
-        // Calculate the edges of the other entity's collider
-        float otherLeft = other.transform.position.x - otherColliderWidth / 2;
-        float otherRight = other.transform.position.x + otherColliderWidth / 2;
-        float otherTop = other.transform.position.y - otherColliderHeight / 2;
-        float otherBottom = other.transform.position.y + otherColliderHeight / 2;
-
-        // Check for overlap on both the x and y axes
-        boolean xOverlap = thisLeft < otherRight && thisRight > otherLeft;
-        boolean yOverlap = thisTop < otherBottom && thisBottom > otherTop;
-
-        // If both x and y axes overlap, then there's a collision
-        if (xOverlap && yOverlap) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     public void stopMoving() {
         shotSpeed = 0;
@@ -127,8 +110,8 @@ public class Projectile {
     }
 
     public void onDestroy() {
-        sprite.getChild("body").setVisible(false);
-        sprite.getChild("splash").setVisible(true);
+//        sprite.getChild("body").setVisible(false);
+//        sprite.getChild("splash").setVisible(true);
     }
 
 }

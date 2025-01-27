@@ -55,8 +55,8 @@ public class Rock {
         float thisBottom = this.transform.position.y + colliderHeight / 2;
 
         // Calculate the collider's dimensions for the other entity
-        float otherColliderWidth = other.sprite.width * other.transform.scale.x;
-        float otherColliderHeight = other.sprite.height * other.transform.scale.y;
+        float otherColliderWidth = other.spriteBottom.width * other.transform.scale.x;
+        float otherColliderHeight = other.spriteBottom.height * other.transform.scale.y;
 
         // Calculate the edges of the other entity's collider
         float otherLeft = other.transform.position.x - otherColliderWidth / 2;

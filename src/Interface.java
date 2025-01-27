@@ -18,8 +18,8 @@ public class Interface {
 
     Entity player;
 
-    float minimapTileWidth = 15;
-    float minimapTileHeight = 15;
+    float minimapTileWidth = 20;
+    float minimapTileHeight = 20;
 
     LevelGenerator levelGenerator;
 
@@ -81,18 +81,18 @@ public class Interface {
     void drawMinimap() {
         p.pushMatrix();
 
-        p.translate(p.width - minimapTileWidth * levelGenerator.maxRoomsOnFloor - 30, 30);
+        p.translate(p.width - minimapTileWidth * levelGenerator.maxRoomsOnFloor + 20, 10);
         p.fill(0, 0, 0, 100f);
         p.noStroke();
-        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor, minimapTileHeight * levelGenerator.maxRoomsOnFloor);
+//        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor - 50, minimapTileHeight * levelGenerator.maxRoomsOnFloor - 50);
         p.noFill();
         p.stroke(0);
         p.strokeWeight(4);
-        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor, minimapTileHeight * levelGenerator.maxRoomsOnFloor);
+//        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor - 50, minimapTileHeight * levelGenerator.maxRoomsOnFloor - 50);
 
         p.stroke(0);
         p.strokeWeight(2);
-        p.translate(minimapTileWidth * levelGenerator.maxRoomsOnFloor / 2, minimapTileHeight * levelGenerator.maxRoomsOnFloor / 2);
+        p.translate((minimapTileWidth * levelGenerator.maxRoomsOnFloor - 50) / 2, (minimapTileHeight * levelGenerator.maxRoomsOnFloor - 50) / 2);
 
         for (int i = 0; i < levelGenerator.roomsOnFloor.size(); i++) {
             Room room = levelGenerator.roomsOnFloor.get(i);

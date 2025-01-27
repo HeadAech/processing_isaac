@@ -1,3 +1,4 @@
+import java.util.UUID;
 
 enum CollisionShapeType {
     CIRCLE, BOX
@@ -8,6 +9,8 @@ enum TriggerType {
 }
 
 public class CollisionShape implements Cloneable {
+
+    UUID uuid = UUID.randomUUID();
 
     Vector2 position;
     Vector2 size;

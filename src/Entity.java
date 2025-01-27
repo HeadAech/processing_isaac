@@ -1,20 +1,18 @@
 import processing.core.PApplet;
 import processing.core.PImage;
-import processing.core.PShape;
+import processing.sound.SoundFile;
+
+import java.util.ArrayList;
 
 public class Entity {
 
     PApplet p;
 
+    ArrayList<SoundFile> hurtSounds = new ArrayList<>();
+    ArrayList<SoundFile> deathSounds = new ArrayList<>();
+
     public Transform transform = new Transform();
 
-    public float health = 100;
-    public float maxHealth = 100;
-    public float speed = 100;
-
-
-    public float damage = 10;
-    public float shotSpeed = 2;
 
     Vector2 acceleration = new Vector2(0, 0);
     float deAcceleration = 0.53f;
@@ -29,7 +27,8 @@ public class Entity {
 
     String spritePath;
 
-    PImage sprite;
+    PImage spriteTop;
+    PImage spriteBottom;
 
     boolean alive = true;
 
@@ -47,11 +46,26 @@ public class Entity {
 
     Input input;
 
+    Animator animatorBottom = new Animator(p);
+    Animator animatorTop = new Animator(p);
+
+    //Stats
+
+    public float health = 100;
+    public float maxHealth = 100;
+
+    public float speed = 1;
+    public float firerate = 2.73f;
+    public float damage = 10;
+    public float range = 7.50f;
+    public float shotSpeed = 2;
+    public float luck = 0.0f;
+
     public Entity(PApplet p, String spritePath) {
         this.p = p;
         this.targetPosition = transform.position;
         this.spritePath = spritePath;
-        this.sprite = p.loadImage(spritePath);
+        this.spriteBottom = p.loadImage(spritePath).get(0, 1 * 32, 32, 32);
         this.maxHealth = health;
 //        loadSprite();
     }
@@ -62,7 +76,16 @@ public class Entity {
         this.targetPosition = position;
         this.spritePath = spritePath;
         this.maxHealth = health;
-        sprite = p.loadImage(spritePath);
+        this.spriteBottom = p.loadImage(spritePath).get(0, 1 * 32, 32, 32);
+        this.spriteTop = p.loadImage(spritePath).get(0, 0 * 32, 32, 32);
+
+        hurtSounds.add(new SoundFile(p, "data/sfx/isaac_hurt_1.wav"));
+        hurtSounds.add(new SoundFile(p, "data/sfx/isaac_hurt_2.wav"));
+        hurtSounds.add(new SoundFile(p, "data/sfx/isaac_hurt_3.wav"));
+
+        deathSounds.add(new SoundFile(p, "data/sfx/isaac_death_1.wav"));
+        deathSounds.add(new SoundFile(p, "data/sfx/isaac_death_2.wav"));
+        deathSounds.add(new SoundFile(p, "data/sfx/isaac_death_3.wav"));
 //        loadSprite();
     }
 
@@ -71,7 +94,7 @@ public class Entity {
     }
 
     private void loadSprite() {
-        sprite = p.loadImage(spritePath);
+        spriteBottom = p.loadImage(spritePath);
     }
 
     public void setScale(float scale) {
@@ -80,7 +103,7 @@ public class Entity {
     }
 
     public void createCollisionShape() {
-        Vector2 size = new Vector2(sprite.width * transform.scale.x, sprite.height * transform.scale.y);
+        Vector2 size = new Vector2(spriteBottom.width * transform.scale.x, spriteBottom.height * transform.scale.y);
 //        Vector2 size = new Vector2(300, 300);
         Vector2 pos = new Vector2(transform.position.x - size.x/2, transform.position.y - size.y/2);
         this.collisionShape = new CollisionShape(pos, size);
@@ -91,13 +114,73 @@ public class Entity {
         this.showCollider = drawCollider;
     }
 
+    public void updateAnimationSpriteTop(PImage frame) {
+        this.spriteTop = frame;
+    }
+
+    public void updateAnimationSpriteBottom(PImage frame) {
+        this.spriteBottom = frame;
+    }
+
+    public Vector2 getDirection() {
+        // Calculate the magnitude of the velocity vector
+        float magnitude = (float) Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+
+        // If the magnitude is zero, the entity is not moving
+        if (magnitude == 0) {
+            return new Vector2(0, 0); // No movement
+        }
+
+        // Normalize the velocity vector
+        float dirX = velocity.x / magnitude;
+        float dirY = velocity.y / magnitude;
+
+        return new Vector2(dirX, dirY); // Return the direction as a unit vector
+    }
+
     public void _update(float deltaTime) {
+        animatorBottom.update(deltaTime);
+        animatorTop.update(deltaTime);
+
+        //animation for bottom sprite (legs)
+        if (animatorBottom.getCurrentAnimation().frame != null) {
+            updateAnimationSpriteBottom(animatorBottom.getCurrentAnimation().frame);
+        }
+
+        Vector2 direction = getDirection();
+
+        if (direction.x == 1) {
+            animatorBottom.playAnimationIfNotPlaying("walkRight");
+        }
+        else if (direction.x == -1) {
+            animatorBottom.playAnimationIfNotPlaying("walkLeft");
+        }
+
+        if (direction.y == 1 || direction.y == -1) {
+            animatorBottom.playAnimationIfNotPlaying("walkTopBottom");
+        }
+
+        if (direction.x == 0 && direction.y == 0) {
+            animatorBottom.playAnimationIfNotPlaying("idle");
+        }
+
+        //animation for top sprite (head)
+        if (animatorTop.getCurrentAnimation().frame != null) {
+            updateAnimationSpriteTop(animatorTop.getCurrentAnimation().frame);
+        }
+
         input();
-        velocity.x += acceleration.x * speed;
-        velocity.y += acceleration.y * speed;
+        velocity.x += acceleration.x * (speed * 100);
+        velocity.y += acceleration.y * (speed * 100);
 
         velocity.x *= smoothing;
         velocity.y *= smoothing;
+
+        if (Math.abs(velocity.x) > 0 && Math.abs(velocity.x) < 5)
+            velocity.x = 0;
+        if (Math.abs(velocity.y) > 0 && Math.abs(velocity.y) < 5)
+            velocity.y = 0;
+
 
 //        p.println(velocity.x, velocity.y);
         // Smoothly move towards the target position
@@ -108,39 +191,54 @@ public class Entity {
 
         if (!canGoOutOfBounds) {
             // Boundary checks
-            float halfWidth = sprite.width * transform.scale.x / 2;
-            float halfHeight = sprite.height * transform.scale.y / 2;
+            float halfWidth = spriteBottom.width * transform.scale.x / 2;
+            float halfHeight = spriteBottom.height * transform.scale.y / 2;
 
             // Restrict player's position within the window boundaries
             transform.position.x = p.constrain(transform.position.x, halfWidth, p.width - halfWidth);
             transform.position.y = p.constrain(transform.position.y, halfHeight, p.height - halfHeight);
 
         }
-        Vector2 size = new Vector2(sprite.width * transform.scale.x, sprite.height * transform.scale.y);
+        Vector2 size = new Vector2(spriteBottom.width * transform.scale.x, spriteBottom.height * transform.scale.y);
         collisionShape.setPosition(new Vector2(transform.position.x - size.x/2, transform.position.y - size.y/2));
 
-        _display();
         acceleration.x = 0;
         acceleration.y = 0;
     }
 
     public void input() {
         if (input == null) return;
+        if (!alive) return;
 
-        if (input.getPressed('w')) {
+        if (input.getPressed("w")) {
             this.acceleration.y -= deAcceleration;
         }
 
-        if (input.getPressed('s')) {
+        if (input.getPressed("s")) {
             this.acceleration.y += deAcceleration;
         }
 
-        if (input.getPressed('a')) {
+        if (input.getPressed("a")) {
             this.acceleration.x -= deAcceleration;
+
         }
 
-        if (input.getPressed('d')) {
+        if (input.getPressed("d")) {
             this.acceleration.x += deAcceleration;
+        }
+
+        if (!animatorTop.getAnimation("hurt").isPlaying()) {
+            if (input.getPressed("up")) {
+                animatorTop.playAnimationIfNotPlaying("shootUp");
+            } else if (input.getPressed("down")) {
+                animatorTop.playAnimationIfNotPlaying("shootDown");
+            } else if (input.getPressed("left")) {
+                animatorTop.playAnimationIfNotPlaying("shootLeft");
+            } else if (input.getPressed("right")) {
+                animatorTop.playAnimationIfNotPlaying("shootRight");
+            } else {
+                animatorTop.playAnimationIfNotPlaying("idle");
+            }
         }
 
 
@@ -164,14 +262,16 @@ public class Entity {
 //        p.scale(transform.scale.x * facing, transform.scale.y);
 
         // Get the bounding box dimensions of the sprite
-        float spriteWidth = sprite.width;
-        float spriteHeight = sprite.height;
+        float spriteWidth = spriteBottom.width;
+        float spriteHeight = spriteBottom.height;
 
         // Move the origin to the center of the sprite
 //        p.translate(-spriteWidth / 2, -spriteHeight / 2);
 
-//        p.imageMode(PApplet.CENTER);
-        p.image(sprite, transform.position.x, transform.position.y, spriteWidth * transform.scale.x, spriteHeight * transform.scale.y);
+        p.imageMode(PApplet.CENTER);
+        if (alive && !animatorTop.getAnimation("hurt").isPlaying())
+            p.image(spriteBottom, transform.position.x, transform.position.y, spriteWidth * transform.scale.x, spriteHeight * transform.scale.y);
+        p.image(spriteTop, transform.position.x, transform.position.y - 7, spriteTop.width * transform.scale.x, spriteTop.height * transform.scale.y);
         p.popMatrix();
 
     }
@@ -179,8 +279,8 @@ public class Entity {
     public void applyTintOverlay() {
         p.fill(255, 0, 0, 100);  // Semi-transparent red
         p.noStroke();
-        float overlayWidth = sprite.width * transform.scale.x;
-        float overlayHeight = sprite.height * transform.scale.y;
+        float overlayWidth = spriteBottom.width * transform.scale.x;
+        float overlayHeight = spriteBottom.height * transform.scale.y;
         p.rect(-overlayWidth / 2, -overlayHeight / 2, overlayWidth, overlayHeight);
     }
 
@@ -197,8 +297,8 @@ public class Entity {
 
     public boolean isColliding(Entity other) {
         // Calculate the collider's dimensions based on the scaled sprite of this entity
-        float colliderWidth = this.sprite.width * this.transform.scale.x;
-        float colliderHeight = this.sprite.height * this.transform.scale.y;
+        float colliderWidth = this.spriteBottom.width * this.transform.scale.x;
+        float colliderHeight = this.spriteBottom.height * this.transform.scale.y;
 
         // Calculate the edges of this entity's collider
         float thisLeft = this.transform.position.x - colliderWidth / 2;
@@ -207,8 +307,8 @@ public class Entity {
         float thisBottom = this.transform.position.y + colliderHeight / 2;
 
         // Calculate the collider's dimensions for the other entity
-        float otherColliderWidth = other.sprite.width * other.transform.scale.x;
-        float otherColliderHeight = other.sprite.height * other.transform.scale.y;
+        float otherColliderWidth = other.spriteBottom.width * other.transform.scale.x;
+        float otherColliderHeight = other.spriteBottom.height * other.transform.scale.y;
 
         // Calculate the edges of the other entity's collider
         float otherLeft = other.transform.position.x - otherColliderWidth / 2;
@@ -229,6 +329,9 @@ public class Entity {
     }
 
     public void damage(float damage) {
+        animatorTop.playAnimation("hurt");
+        int randomHurt = (int) p.random(hurtSounds.size());
+        hurtSounds.get(randomHurt).play();
         isTinted = true;
         tintStartTime = p.millis();
         health -= damage;
@@ -239,6 +342,9 @@ public class Entity {
     }
 
     public void die() {
+        int randomDeathSfx = (int) p.random(deathSounds.size());
+        deathSounds.get(randomDeathSfx).play();
+        animatorTop.playAnimation("death");
         health = 0;
         alive = false;
         p.println("DEAD");

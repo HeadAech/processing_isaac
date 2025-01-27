@@ -43,6 +43,16 @@ public class Physics {
         collidingWith.clear();
     }
 
+    public void checkCollisionForProjectiles(Projectile projectile, float deltaTime) {
+        for (CollisionShape collisionShape : collisionShapes) {
+            boolean collision = false;
+            if (isCollidingWithBoxShape(projectile.collisionShape, collisionShape)) {
+                Signals.ProjectileDestroyed.emit(projectile.uuid);
+                Signals.ProjectileEnteredCollisionShape.emit(collisionShape.uuid);
+            }
+        }
+    }
+
     private Vector2 getSeparationVectorBox(CollisionShape shape1, CollisionShape shape2) {
         float left = shape1.right - shape2.left;
         float right = shape2.right - shape1.left;

@@ -57,3 +57,8 @@ R
 rock
 rock.png
 true
+
+P
+poop
+poop.png
+true

@@ -1,6 +1,7 @@
 
 import processing.core.PApplet;
 import processing.core.PImage;
+import processing.sound.SoundFile;
 
 import java.util.ArrayList;
 
@@ -41,12 +42,17 @@ public class Main extends PApplet {
 
     PImage heartsSpritesheet;
 
+    SoundFile basementMusic;
+
+    ArrayList<SoundFile> tearsFireSounds = new ArrayList<>();
+    ArrayList<SoundFile> tearsImpactSounds = new ArrayList<>();
+
     public void setup(){
         windowTitle("The Binding of Isaac: Retarded");
         frameRate(120);
 //        noSmooth();
 
-        player = new Player(this, new Vector2((float) width /2, (float) height /2), "data/sprites/isaac/isaac_head_front.png");
+        player = new Player(this, new Vector2((float) width /2, (float) height /2), "data/sprites/spritesheet/isaac_spritesheet.png");
         player.setScale(1.5f);
         player.createCollisionShape();
 
@@ -58,6 +64,16 @@ public class Main extends PApplet {
 //        enemy.setScale(0.2f);
 
 //        enemies.add(enemy);
+
+        basementMusic = new SoundFile(this, "data/music/basement_theme.mp3");
+
+        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_0.mp3"));
+        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_1.mp3"));
+        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_2.mp3"));
+
+        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts0.mp3"));
+        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts1.mp3"));
+        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts2.mp3"));
 
         heartsSpritesheet = loadImage("data/sprites/spritesheet/hearts.png");
         ui = new Interface(this, heartsSpritesheet);
@@ -83,14 +99,7 @@ public class Main extends PApplet {
         println("-- Floor --");
         println(levelGenerator.roomsOnFloor.size());
 
-        ArrayList<CollisionShape> collisionShapes = new ArrayList<>();
-        for (Room room: levelGenerator.roomsOnFloor) {
-            for (Tile tile: room.tiles) {
-                if (tile.collisionShape != null)
-                    collisionShapes.add(tile.collisionShape);
-            }
-        }
-        physics.collisionShapes = collisionShapes;
+
         camera = new Camera(this);
 //        camera.zoom(0.1f);
 //        spawnRocks();
@@ -129,6 +138,26 @@ public class Main extends PApplet {
                 }
             }
         });
+
+
+        Signals.ProjectileDestroyed.connect(uuid -> {
+           for (Projectile projectile: projectiles) {
+               if (projectile.uuid.equals(uuid)) {
+                   projectiles.remove(projectile);
+                   int randomImpactSfx = (int) random(tearsImpactSounds.size());
+                   tearsImpactSounds.get(randomImpactSfx).play();
+                   break;
+               }
+           }
+        });
+
+        Signals.UpdateCollisionShapesForPhysics.connect(data -> {
+            updateCollisionShapesForPhysics();
+        });
+
+        updateCollisionShapesForPhysics();
+
+        basementMusic.play();
     }
 
     public void draw(){
@@ -143,6 +172,7 @@ public class Main extends PApplet {
 
         physics.checkCollisionForPlayerWithWalls(player, deltaTime);
 
+
         camera.update(deltaTime);
         camera.apply();
         Room currentRoom = levelGenerator.roomsOnFloor.get(currentRoomIdx);
@@ -156,6 +186,7 @@ public class Main extends PApplet {
 
         for (Room room: levelGenerator.roomsOnFloor) {
             if (room != null) {
+                room.update(deltaTime);
                 pushMatrix();
                 translate(room.origin.x * room.width * 52 * room.scale.x, room.origin.y * room.height * 52 * room.scale.y);
                 for (Tile tile: room.tiles) {
@@ -185,7 +216,7 @@ public class Main extends PApplet {
         for (int i = projectiles.size() - 1; i >= 0; i--) {
             Projectile projectile = projectiles.get(i);
             projectile._update();
-
+            physics.checkCollisionForProjectiles(projectile, deltaTime);
             if (!projectile.checkIfValid()) {
                 if (projectile.destroyStart == 0) projectile.destroyStart = millis();
                 if (millis() - projectile.destroyStart < projectile.destroyEnd) {
@@ -200,11 +231,9 @@ public class Main extends PApplet {
 
 
 
-
-        if (!player.alive) {
-            return;
-        }
+        projectileDelay += deltaTime;
         player._update(deltaTime);
+        player._display();
         if (player.showCollider) {
             player.drawCollider();
         }
@@ -256,12 +285,13 @@ public class Main extends PApplet {
         }
     }
 
+    float projectileDelay = 0.0f;
 
     public void keyPressed() {
 
         //movement
 
-        inputManager.setPressed(key, true);
+        inputManager.setPressed(keyCode, true);
 
         if (key == '-') {
             this.camera.zoom(0.9f);
@@ -302,10 +332,13 @@ public class Main extends PApplet {
                         break;
                 }
 
-                Projectile p = new Projectile(this, player.transform.position, pDir);
-                p.transform.scale.x = 0.2f;
-                p.transform.scale.y = 0.2f;
-                projectiles.add(p);
+                if (projectileDelay > 1/player.firerate) {
+                    projectileDelay = 0;
+                    int randomTearSfx = (int) random(tearsFireSounds.size());
+                    tearsFireSounds.get(randomTearSfx).play();
+                    Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
+                    projectiles.add(p);
+                }
 //                println("SHOOTING", pDir.x, pDir.y);
             }
         }
@@ -313,6 +346,17 @@ public class Main extends PApplet {
     }
 
     public void keyReleased() {
-        inputManager.setPressed(key, false);
+        inputManager.setPressed(keyCode, false);
+    }
+
+    private void updateCollisionShapesForPhysics() {
+        ArrayList<CollisionShape> collisionShapes = new ArrayList<>();
+        for (Room room: levelGenerator.roomsOnFloor) {
+            for (Tile tile: room.tiles) {
+                if (tile.collisionShape != null)
+                    collisionShapes.add(tile.collisionShape);
+            }
+        }
+        physics.collisionShapes = collisionShapes;
     }
 }
