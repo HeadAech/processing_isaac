@@ -18,6 +18,16 @@ public class Interface {
 
     Entity player;
 
+    float minimapTileWidth = 15;
+    float minimapTileHeight = 15;
+
+    LevelGenerator levelGenerator;
+
+    int currentRoomIdx = 0;
+    PImage treasureRoomIcon;
+    PImage bossRoomIcon;
+    PImage shopRoomIcon;
+
 
     Interface(PApplet p, PImage heartsSpriteSheet) {
         this.p = p;
@@ -27,6 +37,10 @@ public class Interface {
         fullRedHeart.resize(heartTileWidth, heartTileHeight);
         halfRedHeart = getTile(1, 0);
         emptyRedHeart = getTile(2, 0);
+
+        treasureRoomIcon = p.loadImage("data/sprites/icons/Treasure_Room_icon.png");
+        bossRoomIcon = p.loadImage("data/sprites/icons/Boss_Room_Icon.png");
+        shopRoomIcon = p.loadImage("data/sprites/icons/Shop_Icon.png");
     }
 
 
@@ -40,6 +54,10 @@ public class Interface {
         this.player = player;
     }
 
+    public void setLevelGenerator(LevelGenerator levelGenerator) {
+        this.levelGenerator = levelGenerator;
+    }
+
     public void _update() {
 
         _display();
@@ -51,6 +69,62 @@ public class Interface {
         p.color(0);
         p.fill(255);
 
+       drawHearts();
+       drawMinimap();
+
+        String fps = "fps: " + p.round(p.frameRate);
+        p.text(fps, p.width - p.textWidth(fps) - 5, p.height - p.textAscent());
+
+        p.popMatrix();
+    }
+
+    void drawMinimap() {
+        p.pushMatrix();
+
+        p.translate(p.width - minimapTileWidth * levelGenerator.maxRoomsOnFloor - 30, 30);
+        p.fill(0, 0, 0, 100f);
+        p.noStroke();
+        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor, minimapTileHeight * levelGenerator.maxRoomsOnFloor);
+        p.noFill();
+        p.stroke(0);
+        p.strokeWeight(4);
+        p.rect(0, 0, minimapTileWidth * levelGenerator.maxRoomsOnFloor, minimapTileHeight * levelGenerator.maxRoomsOnFloor);
+
+        p.stroke(0);
+        p.strokeWeight(2);
+        p.translate(minimapTileWidth * levelGenerator.maxRoomsOnFloor / 2, minimapTileHeight * levelGenerator.maxRoomsOnFloor / 2);
+
+        for (int i = 0; i < levelGenerator.roomsOnFloor.size(); i++) {
+            Room room = levelGenerator.roomsOnFloor.get(i);
+
+//            if (!room.discovered) continue;
+
+            int x = (int) (room.origin.x * minimapTileWidth);
+            int y = (int) (room.origin.y * minimapTileHeight);
+            if (i == currentRoomIdx) {
+                p.fill(255);
+            } else {
+                p.fill(100);
+            }
+            p.rect(x, y, minimapTileWidth, minimapTileHeight);
+            if (room.roomType != RoomType.NORMAL) {
+                PImage icon;
+                switch (room.roomType) {
+                    case TREASURE -> icon = treasureRoomIcon;
+                    case BOSS -> icon = bossRoomIcon;
+                    case SHOP -> icon = shopRoomIcon;
+                    default -> icon = null;
+                }
+                p.noSmooth();
+                p.image(icon, x + minimapTileWidth/2, y + minimapTileHeight/2, minimapTileWidth - 2, minimapTileHeight - 2);
+            }
+        }
+
+        p.popMatrix();
+    }
+
+    void drawHearts() {
+        p.pushMatrix();
         int x = 30;
         int y = 30;
         p.noSmooth();
@@ -84,16 +158,8 @@ public class Interface {
             }
             x += heartTileWidth - 5;
         }
-
-        String fps = "fps: " + p.round(p.frameRate);
-        p.text(fps, p.width - p.textWidth(fps) - 5, p.height - p.textAscent());
-
         p.popMatrix();
     }
 
-
-    void drawHearts(PImage heart) {
-
-    }
 
 }

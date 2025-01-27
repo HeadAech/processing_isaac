@@ -63,6 +63,7 @@ public class Main extends PApplet {
         ui = new Interface(this, heartsSpritesheet);
 
         ui.setPlayer(player);
+        ui.currentRoomIdx = currentRoomIdx;
 
         spawner = new Spawner(this);
 
@@ -77,6 +78,8 @@ public class Main extends PApplet {
             println(room.name);
         }
         levelGenerator.generateFloor();
+        ui.setLevelGenerator(levelGenerator);
+
         println("-- Floor --");
         println(levelGenerator.roomsOnFloor.size());
 
@@ -120,6 +123,8 @@ public class Main extends PApplet {
                             player.transform.position.x = globalPos.x + ((doorTile.width + offsetFromDoor) * originDir.x);
                             player.resetVelocity();
                         }
+                        ui.currentRoomIdx = currentRoomIdx;
+                        levelGenerator.discoverNearbyRooms(levelGenerator.roomsOnFloor.get(currentRoomIdx));
                     }
                 }
             }
@@ -147,8 +152,6 @@ public class Main extends PApplet {
             camera.targetX = signX* (Math.abs(currentRoom.origin.x) * 2) * (currentRoom.width/2) * 52 * currentRoom.scale.x + width/2;
             camera.targetY = signY* (Math.abs(currentRoom.origin.y) * 2) * (currentRoom.height/2) * 52 * currentRoom.scale.y + height/2;
         }
-
-
 
 
         for (Room room: levelGenerator.roomsOnFloor) {
@@ -195,10 +198,7 @@ public class Main extends PApplet {
 
         }
 
-        pushMatrix();
-        translate(camera.x - width/2, camera.y - height/2);
-        ui._update();
-        popMatrix();
+
 
 
         if (!player.alive) {
@@ -210,7 +210,10 @@ public class Main extends PApplet {
         }
 
 
-
+        pushMatrix();
+        translate(camera.x - width/2, camera.y - height/2);
+        ui._update();
+        popMatrix();
     }
 
     public void spawnEnemies(){
@@ -273,6 +276,11 @@ public class Main extends PApplet {
         }
 
         if (key == '§') {
+            println(player.transform.position.x, player.transform.position.y, player.transform.rotation);
+            player.transform.position.x = width/2;
+            player.transform.position.y = height/2;
+            currentRoomIdx = 0;
+            ui.currentRoomIdx = 0;
             levelGenerator.regenerateFloor();
         }
         //shooting

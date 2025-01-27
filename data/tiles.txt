@@ -3,6 +3,11 @@ door
 door.png
 true
 
+B
+boss_room_door
+boss_door.png
+true
+
 W
 wall_top
 wall_top.png

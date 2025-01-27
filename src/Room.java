@@ -2,6 +2,10 @@ import processing.core.PApplet;
 
 import java.util.ArrayList;
 
+enum RoomType {
+    NORMAL, TREASURE, BOSS, SHOP
+}
+
 public class Room implements Cloneable {
 
     PApplet p;
@@ -20,6 +24,10 @@ public class Room implements Cloneable {
     Vector2 origin = new Vector2(0, 0);
     Vector2 scale = new Vector2(1.5f, 1.5f);
 
+    boolean discovered = false;
+
+    RoomType roomType = RoomType.NORMAL;
+
 
     Room(PApplet p, String name) {
         this.p = p;
@@ -37,6 +45,29 @@ public class Room implements Cloneable {
             tile.globalPosition = tile.getGlobalPosition(this.origin, new Vector2(width, height));
             if (tile.collidable)
                 tile.setCollisionShapePosition(new Vector2(this.origin.x, this.origin.y), new Vector2(this.width, this.height));
+        }
+    }
+
+    public void setRoomType(RoomType type) {
+        this.roomType = type;
+        ArrayList<Vector2> doors = getDoorLocations();
+        for (Vector2 door : doors) {
+            replaceDoorsForRoomType(door, type);
+        }
+    }
+
+    public void replaceDoorsForRoomType(Vector2 doorLocation, RoomType type) {
+        if (type == RoomType.NORMAL) return;
+        Tile tile = getDoorTile(doorLocation.x, doorLocation.y);
+        if (tile.tileType == TileType.DOOR) {
+            if (type == RoomType.BOSS) {
+//                tile.tileType = TileType.BOSS_ROOM_DOOR;
+                tile.setSpritePath("data/sprites/boss_door.png");
+            } else if (type == RoomType.SHOP) {
+//                    tile.setSpritePath("data/sprites/shop_door.png");
+            } else if (type == RoomType.TREASURE) {
+                    tile.setSpritePath("data/sprites/treasure_door.png");
+            }
         }
     }
 

@@ -6,7 +6,7 @@ import processing.core.PShape;
 import java.util.ArrayList;
 
 enum TileType{
-    DOOR, FLOOR,
+    BOSS_ROOM_DOOR, DOOR, FLOOR,
     WALL_TOP, WALL_BOTTOM, WALL_LEFT, WALL_RIGHT,
     WALL_CORNER_TOP_LEFT, WALL_CORNER_TOP_RIGHT, WALL_CORNER_BOTTOM_LEFT, WALL_CORNER_BOTTOM_RIGHT,
     ROCK,
@@ -142,6 +142,12 @@ public class Tile implements Cloneable {
 
     }
 
+    public void setSpritePath(String spritePath) {
+        this.spritePath = spritePath;
+        this.textureImage = p.loadImage(this.spritePath);
+        createTextureImage();
+    }
+
     public String getName() {
         return name;
     }
@@ -161,6 +167,7 @@ public class Tile implements Cloneable {
     public static TileType getTileType(char sign) {
         return switch (sign) {
             case '#' -> TileType.DOOR;
+            case 'B' -> TileType.BOSS_ROOM_DOOR;
             case 'W' -> TileType.WALL_TOP;
             case 'D' -> TileType.WALL_RIGHT;
             case 'A' -> TileType.WALL_LEFT;

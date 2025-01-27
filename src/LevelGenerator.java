@@ -301,10 +301,82 @@ public class LevelGenerator {
 
         }
 
+        //add treasure room
+        addRoomToFloor(RoomType.TREASURE);
+        //add boss room
+        addRoomToFloor(RoomType.BOSS);
+
         for(Room room : roomsOnFloor) {
+            ArrayList<Vector2> doors = room.getDoorLocations();
+            for (Vector2 door : doors) {
+                Vector2 origin = decideOriginDirection(door);
+                Room nextRoom = getRoomByOrigin(new Vector2(origin.x + room.origin.x, origin.y + room.origin.y));
+                if (nextRoom == null) continue;
+                room.replaceDoorsForRoomType(door, nextRoom.roomType);
+            }
             replaceNotConnectedDoors(room);
         }
 
+        startingRoom.discovered = true;
+        discoverNearbyRooms(startingRoom);
+
+
+
+    }
+
+    private void addRoomToFloor(RoomType type) {
+        Room furthestRoom = roomsOnFloor.get(roomsOnFloor.size() - 1);
+
+        if (type == RoomType.TREASURE) {
+            furthestRoom = getFurthestRoom();
+        } else {
+            furthestRoom = getOutsideRoom();
+        }
+
+        if (furthestRoom != null) {
+            ArrayList<Vector2> doors = furthestRoom.getDoorLocations();
+            int randomDoorIdx = (int) p.random(doors.size());
+            while (isDoorConnectedToRoom(furthestRoom.origin, doors.get(randomDoorIdx))){
+                doors.remove(randomDoorIdx);
+                randomDoorIdx = (int) p.random(doors.size());
+                if (doors.isEmpty() && randomDoorIdx == 0){
+                    break;
+                }
+            }
+
+            Vector2 origin = decideOriginDirection(doors.get(randomDoorIdx));
+            Room randomEmptyRoom = getRandomEmptyRoom();
+            randomEmptyRoom.setOrigin(new Vector2(furthestRoom.origin.x + origin.x, furthestRoom.origin.y + origin.y));
+            randomEmptyRoom.setRoomType(type);
+            roomsOnFloor.add(randomEmptyRoom);
+        }
+    }
+
+    private Room getOutsideRoom() {
+        Room outsideRoom = roomsOnFloor.get(roomsOnFloor.size() - 1);
+
+        for (Room room : roomsOnFloor) {
+            ArrayList<Vector2> doors = room.getDoorLocations();
+            int randomDoorIdx = (int) p.random(doors.size());
+            while (isDoorConnectedToRoom(room.origin, doors.get(randomDoorIdx))){
+                doors.remove(randomDoorIdx);
+                randomDoorIdx = (int) p.random(doors.size());
+                if (doors.isEmpty() && randomDoorIdx == 0){
+                    break;
+                }
+            }
+
+            if (doors.isEmpty() && randomDoorIdx == 0){
+                continue;
+            } else {
+                outsideRoom = room;
+                break;
+            }
+
+
+        }
+
+        return outsideRoom;
     }
 
     public int getRoomIndex(Vector2 origin) {
@@ -338,6 +410,17 @@ public class LevelGenerator {
         return uniqueRoom;
     }
 
+    public void discoverNearbyRooms(Room room) {
+        ArrayList<Vector2> doors = room.getDoorLocations();
+        for (Vector2 doorLocation : doors) {
+            Vector2 origin = decideOriginDirection(doorLocation);
+            Vector2 origin1 = new Vector2(origin.x + room.origin.x, origin.y + room.origin.y);
+            Room room1 = getRoomByOrigin(origin1);
+            if (room1 == null) continue;
+            room1.discovered = true;
+        }
+    }
+
     private Room getRandomRoomOnFloor() {
         int randomIdx = (int) p.random(roomsOnFloor.size());
         Room randomRoom = createUniqueRoom(roomsOnFloor.get(randomIdx));
@@ -353,18 +436,22 @@ public class LevelGenerator {
     private void replaceNotConnectedDoors(Room room) {
         ArrayList<Vector2> startingDoors = room.getDoorLocations();
         for (Vector2 doorLocation : startingDoors) {
-            if (!isDoorConnectedToRoom(room.origin, doorLocation)) {
-                Tile currentTile = room.getTile(doorLocation.x, doorLocation.y);
-                currentTile.tileType = TileType.WALL_TOP;
-                Tile wallTile = getTile(getTileWallOrientation(doorLocation));
-                Tile clone = wallTile.clone();
-                clone.position = new Vector2(currentTile.position.x, currentTile.position.y);
-                clone.rotation = 0;
-                clone.collidable = true;
-                clone.tileType = wallTile.tileType;
+            replaceDoorInRoom(room, doorLocation);
+        }
+    }
 
-                room.replaceDoor(doorLocation.x, doorLocation.y, clone);
-            }
+    private void replaceDoorInRoom(Room room, Vector2 doorLocation) {
+        if (!isDoorConnectedToRoom(room.origin, doorLocation)) {
+            Tile currentTile = room.getTile(doorLocation.x, doorLocation.y);
+            currentTile.tileType = TileType.WALL_TOP;
+            Tile wallTile = getTile(getTileWallOrientation(doorLocation));
+            Tile clone = wallTile.clone();
+            clone.position = new Vector2(currentTile.position.x, currentTile.position.y);
+            clone.rotation = 0;
+            clone.collidable = true;
+            clone.tileType = wallTile.tileType;
+
+            room.replaceDoor(doorLocation.x, doorLocation.y, clone);
         }
     }
 
@@ -384,13 +471,29 @@ public class LevelGenerator {
 
         Vector2 doorLocation = startingDoors.get(randomIdx);
 
-        if (!isDoorConnectedToRoom(room.origin, doorLocation)) {
-            Tile currentTile = room.getTile(doorLocation.x, doorLocation.y);
-            Tile wallTile = getTile(getTileWallOrientation(doorLocation));
-            wallTile.position = currentTile.position;
-            wallTile.rotation = 0;
-            room.setTile(doorLocation.x, doorLocation.y, wallTile);
+        replaceDoorInRoom(room, doorLocation);
+    }
+
+    private Room getFurthestRoom() {
+        Room room = null;
+        int x = 0;
+        int y = 0;
+
+        for (int i = 0; i < roomsOnFloor.size(); i++) {
+            Room currentRoom = roomsOnFloor.get(i);
+            if (currentRoom == null) continue;
+            int newX = (int) Math.abs(currentRoom.origin.x);
+            int newY = (int) Math.abs(currentRoom.origin.y);
+            if (newX > Math.abs(x) || newY > Math.abs(y)) {
+                if (currentRoom.roomType != RoomType.NORMAL) continue;
+
+                room = currentRoom;
+                x = (int) currentRoom.origin.x;
+                y = (int) currentRoom.origin.y;
+            }
         }
+
+        return room;
     }
 
     private TileType getTileWallOrientation(Vector2 doorLocation) {
