@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PZP_Project:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PZP_Project_jar</output-path>
+    <root id="archive" name="PZP_Project.jar">
+      <element id="module-output" name="PZP_Project" />
+      <element id="extracted-dir" path="/Applications/Processing.app/Contents/Java/core/library/gluegen-rt.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/sound.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/Applications/Processing.app/Contents/Java/core/library/core.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/Applications/Processing.app/Contents/Java/core/library/jogl-all.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/vorbisspi-1.0.3.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/tritonus-share-0.3.7.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/mp3spi-1.9.5.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/jsyn-17.1.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/jorbis-0.0.17.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/jportaudio.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Documents/Processing/libraries/sound/library/jlayer-1.0.1.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/Applications/Processing.app/Contents/Java/core.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

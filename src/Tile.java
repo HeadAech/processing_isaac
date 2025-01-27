@@ -12,6 +12,7 @@ enum TileType{
     WALL_CORNER_TOP_LEFT, WALL_CORNER_TOP_RIGHT, WALL_CORNER_BOTTOM_LEFT, WALL_CORNER_BOTTOM_RIGHT,
     ROCK,
     POOP,
+    ENEMY_SPAWN
 }
 
 public class Tile implements Cloneable {
@@ -210,6 +211,7 @@ public class Tile implements Cloneable {
             case '.' -> TileType.FLOOR;
             case 'R' -> TileType.ROCK;
             case 'P' -> TileType.POOP;
+            case '+' -> TileType.ENEMY_SPAWN;
             default -> TileType.FLOOR;
         };
     }

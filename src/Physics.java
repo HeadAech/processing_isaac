@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Physics {
@@ -43,12 +42,44 @@ public class Physics {
         collidingWith.clear();
     }
 
+    public void checkCollisionForEntitiesWithWalls(Entity entity) {
+        ArrayList<CollisionShape> collidingWith = new ArrayList<>();
+        for (CollisionShape collisionShape : collisionShapes) {
+            boolean collision = false;
+            if (isCollidingWithBoxShape(entity.collisionShape, collisionShape)) {
+                collision = true;
+            }
+
+            if (collision) {
+                if (!collidingWith.contains(collisionShape)) {
+                    collidingWith.add(collisionShape);
+                }
+            }
+        }
+
+        if (!collidingWith.isEmpty()) {
+            applySeparationToPlayer(entity, collidingWith);
+        }
+        collidingWith.clear();
+    }
+
     public void checkCollisionForProjectiles(Projectile projectile, float deltaTime) {
         for (CollisionShape collisionShape : collisionShapes) {
             boolean collision = false;
             if (isCollidingWithBoxShape(projectile.collisionShape, collisionShape)) {
                 Signals.ProjectileDestroyed.emit(projectile.uuid);
                 Signals.ProjectileEnteredCollisionShape.emit(collisionShape.uuid);
+            }
+        }
+    }
+
+    public void checkCollisionForProjectileWithEntity(Projectile projectile, ArrayList<Enemy> entities) {
+        for (Entity entity : entities) {
+            CollisionShape collisionShape = entity.collisionShape;
+            if (isCollidingWithBoxShape(projectile.collisionShape, collisionShape)) {
+                Signals.ProjectileDestroyed.emit(projectile.uuid);
+//                Signals.ProjectileEnteredCollisionShape.emit(collisionShape.uuid);
+                Signals.DamageUUID.emit(new DamageUUID(collisionShape.uuid, projectile.damage));
             }
         }
     }

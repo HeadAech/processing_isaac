@@ -28,26 +28,46 @@ public class Interface {
     PImage bossRoomIcon;
     PImage shopRoomIcon;
 
+    //stats icons
+    int statIconWidth = 64;
+    int statIconHeight = 64;
+    PImage statsSpritesheet;
+    PImage speedIcon;
+    PImage damageIcon;
+    PImage firerateIcon;
+    PImage rangeIcon;
+    PImage shotspeedIcon;
+    PImage luckIcon;
+
 
     Interface(PApplet p, PImage heartsSpriteSheet) {
         this.p = p;
         this.heartsSpriteSheet = heartsSpriteSheet;
 
-        fullRedHeart = getTile(0, 0);
+        fullRedHeart = getTile(0, 0, heartTileWidth, heartTileHeight, heartsSpriteSheet);
         fullRedHeart.resize(heartTileWidth, heartTileHeight);
-        halfRedHeart = getTile(1, 0);
-        emptyRedHeart = getTile(2, 0);
+        halfRedHeart = getTile(1, 0,heartTileWidth, heartTileHeight, heartsSpriteSheet);
+        emptyRedHeart = getTile(2, 0,heartTileWidth, heartTileHeight, heartsSpriteSheet);
 
         treasureRoomIcon = p.loadImage("data/sprites/icons/Treasure_Room_icon.png");
         bossRoomIcon = p.loadImage("data/sprites/icons/Boss_Room_Icon.png");
         shopRoomIcon = p.loadImage("data/sprites/icons/Shop_Icon.png");
+
+        //stats
+        statsSpritesheet = p.loadImage("data/sprites/spritesheet/hudstats.png");
+        speedIcon = getTile(1, 0, statIconWidth, statIconHeight, statsSpritesheet);
+        damageIcon = getTile(0, 0, statIconWidth, statIconHeight, statsSpritesheet);
+        firerateIcon = getTile(0, 1, statIconWidth, statIconHeight, statsSpritesheet);
+        rangeIcon = getTile(2, 0, statIconWidth, statIconHeight, statsSpritesheet);
+        shotspeedIcon = getTile(1, 1, statIconWidth, statIconHeight, statsSpritesheet);
+        luckIcon = getTile(2, 1, statIconWidth, statIconHeight, statsSpritesheet);
     }
 
 
-    private PImage getTile(int x, int y) {
-        int sx = x * heartTileWidth;
-        int sy = y * heartTileHeight;
-        return heartsSpriteSheet.get(sx, sy, heartTileWidth, heartTileHeight);
+    private PImage getTile(int x, int y, int w, int h, PImage spritesheet) {
+        int sx = x * w;
+        int sy = y * h;
+        return spritesheet.get(sx, sy, w, h);
     }
 
     public void setPlayer(Entity player) {
@@ -71,6 +91,7 @@ public class Interface {
 
        drawHearts();
        drawMinimap();
+       drawStats();
 
         String fps = "fps: " + p.round(p.frameRate);
         p.text(fps, p.width - p.textWidth(fps) - 5, p.height - p.textAscent());
@@ -97,7 +118,7 @@ public class Interface {
         for (int i = 0; i < levelGenerator.roomsOnFloor.size(); i++) {
             Room room = levelGenerator.roomsOnFloor.get(i);
 
-//            if (!room.discovered) continue;
+            if (!room.discovered) continue;
 
             int x = (int) (room.origin.x * minimapTileWidth);
             int y = (int) (room.origin.y * minimapTileHeight);
@@ -158,6 +179,55 @@ public class Interface {
             }
             x += heartTileWidth - 5;
         }
+        p.popMatrix();
+    }
+
+    void drawStats() {
+        p.pushMatrix();
+
+        int x = 50;
+        int y = 200;
+        p.color(255);
+        p.strokeWeight(1);
+        p.fill(255);
+        p.textSize(22);
+        p.textAlign(PApplet.CENTER, PApplet.CENTER);
+
+        String speed = String.format("%.2f", player.speed);
+        String firerate = String.format("%.2f", player.firerate);
+        String damage = String.format("%.2f", player.damage);
+        String range = String.format("%.2f", player.range);
+        String shotspeed = String.format("%.2f", player.shotSpeed);
+        String luck = String.format("%.2f", player.luck);
+
+        p.image(speedIcon, x, y, statIconWidth, statIconHeight);
+        p.text(speed, x + statIconWidth, y);
+
+        y += statIconHeight;
+
+        p.image(firerateIcon, x, y, statIconWidth, statIconHeight);
+        p.text(firerate, x + statIconWidth, y);
+
+        y += statIconHeight;
+
+        p.image(damageIcon, x, y, statIconWidth, statIconHeight);
+        p.text(damage, x + statIconWidth, y);
+
+        y += statIconHeight;
+
+        p.image(rangeIcon, x, y, statIconWidth, statIconHeight);
+        p.text(range, x + statIconWidth, y);
+
+        y += statIconHeight;
+
+        p.image(shotspeedIcon, x, y, statIconWidth, statIconHeight);
+        p.text(shotspeed, x + statIconWidth, y);
+
+        y += statIconHeight;
+
+        p.image(luckIcon, x, y, statIconWidth, statIconHeight);
+        p.text(luck, x + statIconWidth, y);
+
         p.popMatrix();
     }
 

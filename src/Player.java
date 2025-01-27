@@ -3,8 +3,6 @@ import processing.core.PImage;
 
 public class Player extends Entity {
 
-    public float damage = 20;
-
     public Player(PApplet p, String spritePath) {
         super(p, spritePath);
         setPlayerSprite();
@@ -18,9 +16,14 @@ public class Player extends Entity {
     }
 
     private void setPlayerStats() {
-        super.damage = 20;
+        this.damage = 3.50f;
         super.health = 6;
         super.maxHealth = 20;
+        super.speed = 1;
+        super.firerate = 2.75f;
+        super.range = 7.50f;
+        super.shotSpeed = 2;
+        super.luck = 0.0f;
         canGoOutOfBounds = true;
         PImage spritesheet = p.loadImage("data/sprites/spritesheet/isaac_spritesheet.png");
         //walk top-bottom
@@ -125,6 +128,69 @@ public class Player extends Entity {
         shootLeft.addFrame(new Vector2(7, 0));
         shootLeft.setDuration(1/super.firerate);
         super.animatorTop.addAnimation("shootLeft", shootLeft);
+    }
+
+    @Override
+    public void _update(float deltaTime) {
+        Vector2 direction = getDirection();
+
+        if (direction.x == 1) {
+            animatorBottom.playAnimationIfNotPlaying("walkRight");
+        }
+        else if (direction.x == -1) {
+            animatorBottom.playAnimationIfNotPlaying("walkLeft");
+        }
+
+        if (direction.y == 1 || direction.y == -1) {
+            animatorBottom.playAnimationIfNotPlaying("walkTopBottom");
+        }
+
+        if (direction.x == 0 && direction.y == 0) {
+            animatorBottom.playAnimationIfNotPlaying("idle");
+        }
+        super._update(deltaTime);
+    }
+
+    @Override
+    public void _display() {
+        p.pushMatrix();
+
+        if (velocity.x > 0) facing = -1;
+        else if (velocity.x < 0) facing = 1;
+
+//        p.translate(transform.position.x, transform.position.y);
+//        p.scale(transform.scale.x * facing, transform.scale.y);
+
+        // Get the bounding box dimensions of the sprite
+        float spriteWidth = spriteBottom.width;
+        float spriteHeight = spriteBottom.height;
+
+        // Move the origin to the center of the sprite
+//        p.translate(-spriteWidth / 2, -spriteHeight / 2);
+
+        p.imageMode(PApplet.CENTER);
+        if (alive && !animatorTop.getAnimation("hurt").isPlaying())
+            p.image(spriteBottom, transform.position.x, transform.position.y, spriteWidth * transform.scale.x, spriteHeight * transform.scale.y);
+        p.image(spriteTop, transform.position.x, transform.position.y - 7, spriteTop.width * transform.scale.x, spriteTop.height * transform.scale.y);
+        p.popMatrix();
+        super._display();
+    }
+
+    @Override
+    public void damage(float damage) {
+        if (!alive) return;
+        animatorTop.playAnimation("hurt");
+        int randomHurt = (int) p.random(hurtSounds.size());
+        hurtSounds.get(randomHurt).play();
+        super.damage(damage);
+    }
+
+    @Override
+    public void die() {
+        int randomDeathSfx = (int) p.random(deathSounds.size());
+        deathSounds.get(randomDeathSfx).play();
+        animatorTop.playAnimation("death");
+        super.die();
     }
 
     private void setPlayerSprite() {

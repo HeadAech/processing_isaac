@@ -41,10 +41,15 @@ public class Room implements Cloneable {
     void setOrigin(Vector2 origin) {
         this.origin = origin;
         PApplet.println(origin.x, origin.y);
+        int i = 0;
         for (Tile tile : tiles) {
             tile.globalPosition = tile.getGlobalPosition(this.origin, new Vector2(width, height));
             if (tile.collidable)
                 tile.setCollisionShapePosition(new Vector2(this.origin.x, this.origin.y), new Vector2(this.width, this.height));
+            if (tile.tileType == TileType.ENEMY_SPAWN) {
+                enemies.get(i).transform.position = tile.getGlobalPosition(this.origin, new Vector2(width, height));
+                i++;
+            }
         }
     }
 
@@ -79,6 +84,13 @@ public class Room implements Cloneable {
                     Signals.UpdateCollisionShapesForPhysics.emit(null);
                     break;
                 }
+            }
+        }
+
+        for (Enemy enemy: enemies) {
+            if (!enemy.alive) {
+                enemies.remove(enemy);
+                break;
             }
         }
     }
@@ -146,6 +158,10 @@ public class Room implements Cloneable {
         return new Vector2(globalX, globalY);
     }
 
+    public void addEnemy(Enemy enemy) {
+        enemies.add(enemy);
+    }
+
     // Override clone() to perform a deep copy
     @Override
     public Room clone() {
@@ -157,7 +173,7 @@ public class Room implements Cloneable {
             copy.origin = origin;
             copy.scale = scale;
 //            copy.obstacles = (ArrayList<Obstacle>) obstacles.clone();
-//            copy.enemies = (ArrayList<Enemy>) enemies.clone();
+            copy.enemies = (ArrayList<Enemy>) enemies.clone();
             return copy;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();

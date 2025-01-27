@@ -1,4 +1,5 @@
 import processing.core.PApplet;
+import processing.core.PImage;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,13 +15,42 @@ public class LevelGenerator {
 
     ArrayList<Tile> tiles = new ArrayList<>();
 
+    ArrayList<Enemy> enemies = new ArrayList<>();
+
     int maxRoomsOnFloor = 15;
 
     ArrayList<Room> roomsOnFloor = new ArrayList<>();
 
+    Entity player;
+
     LevelGenerator(PApplet p) {
         this.p = p;
 
+    }
+
+    public void setPlayer(Entity player) {
+        this.player = player;
+    }
+
+    public void prepareEnemies() {
+//        PImage dipSpritesheet = p.loadImage("data/sprites/spritesheet/dip.png");
+        Enemy dip = new Enemy(p, new Vector2(p.width/2 - 100, p.height/2), player, "data/sprites/spritesheet/dip.png");
+        dip.createCollisionShape();
+        dip.health = 8;
+
+        PImage dipSprite = p.loadImage("data/sprites/spritesheet/dip.png");
+
+        Animation idle = new Animation(p, dipSprite, dip.spriteBottom);
+        idle.setPlayStyle(PlayStyle.PS_LOOP);
+        idle.addFrame(new Vector2(0, 0));
+        idle.addFrame(new Vector2(1, 0));
+        idle.addFrame(new Vector2(2, 0));
+        idle.setDuration(0.15f);
+        dip.animatorBottom.addAnimation("idle", idle);
+        dip.animatorBottom.playAnimation("idle");
+
+
+        enemies.add(dip);
     }
 
     public void prepareTiles() {
@@ -139,6 +169,15 @@ public class LevelGenerator {
                                     Tile floorTile = new Tile(p, getTile('.'));
                                     floorTile.setPosition(tile.position);
                                     room.addTile(floorTile);
+                                }
+                                if (tile.tileType == TileType.ENEMY_SPAWN) {
+                                    int randEnemyIdx = (int) p.random(enemies.size());
+                                    Enemy enemy = new Enemy(enemies.get(randEnemyIdx));
+                                    int signX = Integer.signum((int) room.origin.x);
+                                    int signY = Integer.signum((int) room.origin.y);
+                                    enemy.transform.position.x = tile.getGlobalPosition(room.origin, room.scale).x;
+                                    enemy.transform.position.y = tile.getGlobalPosition(room.origin, room.scale).y;
+                                    room.addEnemy(enemy);
                                 }
                                 room.addTile(tile);
                                 x++;
@@ -408,8 +447,31 @@ public class LevelGenerator {
                     newTile.collisionShape.setTriggerType(TriggerType.DOOR);
                 }
             }
+            if (tile.tileType == TileType.ENEMY_SPAWN) {
+                Enemy enemy = originalRoom.enemies.getFirst();
+                Enemy newEnemy = new Enemy(p, new Vector2(enemy.transform.position.x, enemy.transform.position.y), player, enemy.spritePath);
+                newEnemy.createCollisionShape();
+                newEnemy.health = enemy.health;
+                newEnemy.transform.position.x = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).x;
+                newEnemy.transform.position.y = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).y;
+
+                // Clone animations
+                for (String animName : enemy.animatorBottom.animations.keySet()) {
+                    Animation originalAnimation = enemy.animatorBottom.getAnimation(animName);
+                    Animation newAnimation = originalAnimation;
+                    newEnemy.animatorBottom.addAnimation(animName, newAnimation);
+                }
+                newEnemy.animatorBottom.playAnimation("idle");
+
+                uniqueRoom.addEnemy(newEnemy);
+            }
+//            uniqueRoom.enemies.clear();
+//            for (Enemy enemy: originalRoom.enemies) {
+//                uniqueRoom.addEnemy(new Enemy(enemy));
+//            }
             uniqueRoom.addTile(newTile);
         }
+
         return uniqueRoom;
     }
 

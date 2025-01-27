@@ -3,6 +3,7 @@ import processing.core.PImage;
 import processing.sound.SoundFile;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class Entity {
 
@@ -56,7 +57,7 @@ public class Entity {
 
     public float speed = 1;
     public float firerate = 2.73f;
-    public float damage = 10;
+    public float damage = 1;
     public float range = 7.50f;
     public float shotSpeed = 2;
     public float luck = 0.0f;
@@ -68,6 +69,7 @@ public class Entity {
         this.spriteBottom = p.loadImage(spritePath).get(0, 1 * 32, 32, 32);
         this.maxHealth = health;
 //        loadSprite();
+        onProjectileHit();
     }
 
     public Entity(PApplet p, Vector2 position, String spritePath) {
@@ -87,6 +89,20 @@ public class Entity {
         deathSounds.add(new SoundFile(p, "data/sfx/isaac_death_2.wav"));
         deathSounds.add(new SoundFile(p, "data/sfx/isaac_death_3.wav"));
 //        loadSprite();
+        onProjectileHit();
+    }
+
+    public void onProjectileHit() {
+        Signals.DamageUUID.connect(data -> {
+            UUID uuid = data.uuid;
+            float damage = data.damage;
+
+            if (collisionShape == null) return;
+
+            if (!collisionShape.uuid.equals(uuid)) return;
+
+            this.damage(damage);
+        });
     }
 
     public void setInput(Input input) {
@@ -143,35 +159,26 @@ public class Entity {
         animatorTop.update(deltaTime);
 
         //animation for bottom sprite (legs)
-        if (animatorBottom.getCurrentAnimation().frame != null) {
-            updateAnimationSpriteBottom(animatorBottom.getCurrentAnimation().frame);
+        if (animatorBottom != null) {
+            if (animatorBottom.getCurrentAnimation().frame != null) {
+                updateAnimationSpriteBottom(animatorBottom.getCurrentAnimation().frame);
+            }
         }
 
-        Vector2 direction = getDirection();
 
-        if (direction.x == 1) {
-            animatorBottom.playAnimationIfNotPlaying("walkRight");
-        }
-        else if (direction.x == -1) {
-            animatorBottom.playAnimationIfNotPlaying("walkLeft");
-        }
-
-        if (direction.y == 1 || direction.y == -1) {
-            animatorBottom.playAnimationIfNotPlaying("walkTopBottom");
-        }
-
-        if (direction.x == 0 && direction.y == 0) {
-            animatorBottom.playAnimationIfNotPlaying("idle");
-        }
 
         //animation for top sprite (head)
-        if (animatorTop.getCurrentAnimation().frame != null) {
-            updateAnimationSpriteTop(animatorTop.getCurrentAnimation().frame);
+        if (animatorTop != null) {
+            if (animatorTop.getCurrentAnimation() != null) {
+                if (animatorTop.getCurrentAnimation().frame != null) {
+                    updateAnimationSpriteTop(animatorTop.getCurrentAnimation().frame);
+                }
+            }
         }
 
         input();
-        velocity.x += acceleration.x * (speed * 100);
-        velocity.y += acceleration.y * (speed * 100);
+        velocity.x += acceleration.x * (speed * 80);
+        velocity.y += acceleration.y * (speed * 80);
 
         velocity.x *= smoothing;
         velocity.y *= smoothing;
@@ -253,26 +260,7 @@ public class Entity {
     }
 
     public void _display() {
-        p.pushMatrix();
 
-        if (velocity.x > 0) facing = -1;
-        else if (velocity.x < 0) facing = 1;
-
-//        p.translate(transform.position.x, transform.position.y);
-//        p.scale(transform.scale.x * facing, transform.scale.y);
-
-        // Get the bounding box dimensions of the sprite
-        float spriteWidth = spriteBottom.width;
-        float spriteHeight = spriteBottom.height;
-
-        // Move the origin to the center of the sprite
-//        p.translate(-spriteWidth / 2, -spriteHeight / 2);
-
-        p.imageMode(PApplet.CENTER);
-        if (alive && !animatorTop.getAnimation("hurt").isPlaying())
-            p.image(spriteBottom, transform.position.x, transform.position.y, spriteWidth * transform.scale.x, spriteHeight * transform.scale.y);
-        p.image(spriteTop, transform.position.x, transform.position.y - 7, spriteTop.width * transform.scale.x, spriteTop.height * transform.scale.y);
-        p.popMatrix();
 
     }
 
@@ -329,9 +317,7 @@ public class Entity {
     }
 
     public void damage(float damage) {
-        animatorTop.playAnimation("hurt");
-        int randomHurt = (int) p.random(hurtSounds.size());
-        hurtSounds.get(randomHurt).play();
+
         isTinted = true;
         tintStartTime = p.millis();
         health -= damage;
@@ -342,9 +328,6 @@ public class Entity {
     }
 
     public void die() {
-        int randomDeathSfx = (int) p.random(deathSounds.size());
-        deathSounds.get(randomDeathSfx).play();
-        animatorTop.playAnimation("death");
         health = 0;
         alive = false;
         p.println("DEAD");
@@ -354,4 +337,5 @@ public class Entity {
         velocity.x = 0;
         velocity.y = 0;
     }
+
 }

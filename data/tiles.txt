@@ -62,3 +62,8 @@ P
 poop
 poop.png
 true
+
++
+enemy_spawn
+floor.png
+false

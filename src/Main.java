@@ -88,6 +88,9 @@ public class Main extends PApplet {
         physics = new Physics();
 
         levelGenerator = new LevelGenerator(this);
+        levelGenerator.setPlayer(player);
+
+        levelGenerator.prepareEnemies();
         levelGenerator.prepareTiles();
         levelGenerator.prepareRooms();
         for(Room room: levelGenerator.rooms) {
@@ -157,7 +160,9 @@ public class Main extends PApplet {
 
         updateCollisionShapesForPhysics();
 
-        basementMusic.play();
+
+
+//        basementMusic.play();
     }
 
     public void draw(){
@@ -205,11 +210,20 @@ public class Main extends PApplet {
                 }
                 popMatrix();
 
+
+
             }
 
 
         }
 
+        for (Entity enemy: currentRoom.enemies) {
+            enemy._update(deltaTime);
+            enemy._display();
+            enemy.drawCollider();
+            physics.checkCollisionForEntitiesWithWalls(enemy);
+
+        }
 
 //        translate(0,0);
 
@@ -217,17 +231,23 @@ public class Main extends PApplet {
             Projectile projectile = projectiles.get(i);
             projectile._update();
             physics.checkCollisionForProjectiles(projectile, deltaTime);
+            physics.checkCollisionForProjectileWithEntity(projectile, currentRoom.enemies);
             if (!projectile.checkIfValid()) {
                 if (projectile.destroyStart == 0) projectile.destroyStart = millis();
                 if (millis() - projectile.destroyStart < projectile.destroyEnd) {
                     projectile.onDestroy();
                 } else {
+                    int randomImpactSfx = (int) random(tearsImpactSounds.size());
+                    tearsImpactSounds.get(randomImpactSfx).play();
                     projectiles.remove(i);  // Remove expired projectile
                 }
             }
 
 
         }
+
+
+
 
 
 
@@ -257,11 +277,7 @@ public class Main extends PApplet {
         randomPoses.add(randomPos2);
         randomPoses.add(randomPos3);
 
-//        if (spawner.shouldSpawn()) {
-//            Entity newEnemy = new Enemy(this, randomPoses.get((int) random(0, 3)), player, "data/sprites/isaac/isaac_head_front.png");
-//            newEnemy.setScale(0.2f);
-//            enemies.add(newEnemy);
-//        }
+
     }
 
     public void drawBackground() {
@@ -337,6 +353,7 @@ public class Main extends PApplet {
                     int randomTearSfx = (int) random(tearsFireSounds.size());
                     tearsFireSounds.get(randomTearSfx).play();
                     Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
+                    p.damage = player.damage;
                     projectiles.add(p);
                 }
 //                println("SHOOTING", pDir.x, pDir.y);

@@ -14,7 +14,7 @@ public class Projectile {
 
     Vector2 direction = new Vector2(0, 0);
 
-    private float damage = 10;
+    float damage = 10;
     private float shotSpeed = 5.0f;
 
     int spawnTime = 0;
