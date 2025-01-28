@@ -12,7 +12,8 @@ enum TileType{
     WALL_CORNER_TOP_LEFT, WALL_CORNER_TOP_RIGHT, WALL_CORNER_BOTTOM_LEFT, WALL_CORNER_BOTTOM_RIGHT,
     ROCK,
     POOP,
-    ENEMY_SPAWN
+    ENEMY_SPAWN,
+    DOOR_CLOSED
 }
 
 public class Tile implements Cloneable {
@@ -44,14 +45,13 @@ public class Tile implements Cloneable {
 
     Vector2 globalPosition = new Vector2(0, 0);
 
-    float health = 10;
+    float health = 6;
 
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = getTileType(sign);
-        textureImage = p.loadImage(this.spritePath);
         createTextureImage();
         onProjectileEnteredCollisionShape();
     }
@@ -88,9 +88,22 @@ public class Tile implements Cloneable {
 
     public void damage(float damage) {
         health -= damage;
+        if (tileType == TileType.POOP) {
+            if (health <= 0) {
+                this.spritePath = "data/sprites/poop_destroyed.png";
+            } else if (health <= 2) {
+                this.spritePath = "data/sprites/poop_damaged_2.png";
+            } else if (health <= 4) {
+                this.spritePath = "data/sprites/poop_damaged_1.png";
+
+            }
+            this.createTextureImage();
+        }
     }
 
     public void createTextureImage() {
+        textureImage = p.loadImage(this.spritePath);
+
         if (tileType == TileType.ROCK) {
             ArrayList<Float> rotations = new ArrayList<>();
             rotations.add(0.0f);
@@ -150,6 +163,20 @@ public class Tile implements Cloneable {
         return new Vector2(globalX, globalY);
     }
 
+    public void setLockedDoors(boolean locked) {
+        String closed = locked ? "closed" : "open";
+        if (tileType == TileType.DOOR) {
+            if (name.contains("Boss")) {
+                this.spritePath = "data/sprites/boss_room_door_"+ closed +".png";
+            } else if (name.contains("Treasure")) {
+                this.spritePath = "data/sprites/treasure_room_door_"+ closed +".png";
+            } else {
+                this.spritePath = "data/sprites/door_"+ closed +".png";
+            }
+            createTextureImage();
+        }
+    }
+
     public void draw() {
         p.pushMatrix();
 
@@ -199,6 +226,7 @@ public class Tile implements Cloneable {
     public static TileType getTileType(char sign) {
         return switch (sign) {
             case '#' -> TileType.DOOR;
+            case '$' -> TileType.DOOR_CLOSED;
             case 'B' -> TileType.BOSS_ROOM_DOOR;
             case 'W' -> TileType.WALL_TOP;
             case 'D' -> TileType.WALL_RIGHT;

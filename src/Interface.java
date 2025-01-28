@@ -118,7 +118,7 @@ public class Interface {
         for (int i = 0; i < levelGenerator.roomsOnFloor.size(); i++) {
             Room room = levelGenerator.roomsOnFloor.get(i);
 
-            if (!room.discovered) continue;
+//            if (!room.discovered) continue;
 
             int x = (int) (room.origin.x * minimapTileWidth);
             int y = (int) (room.origin.y * minimapTileHeight);

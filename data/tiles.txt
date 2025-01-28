@@ -1,11 +1,16 @@
 #
-door
-door.png
+door_open
+door_open.png
+true
+
+$
+door_closed
+door_closed.png
 true
 
 B
 boss_room_door
-boss_door.png
+boss_room_door_open.png
 true
 
 W

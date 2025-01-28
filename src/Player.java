@@ -20,7 +20,7 @@ public class Player extends Entity {
         super.health = 6;
         super.maxHealth = 20;
         super.speed = 1;
-        super.firerate = 2.75f;
+        super.firerate = 2.73f;
         super.range = 7.50f;
         super.shotSpeed = 2;
         super.luck = 0.0f;

@@ -1,4 +1,5 @@
 import processing.core.PApplet;
+import processing.sound.SoundFile;
 
 import java.util.ArrayList;
 
@@ -18,6 +19,10 @@ public class Room implements Cloneable {
 
     ArrayList<Tile> tiles = new ArrayList<>();
 
+    ArrayList<Decal> decals = new ArrayList<>();
+
+
+
     float width = 15;
     float height = 9;
 
@@ -28,14 +33,45 @@ public class Room implements Cloneable {
 
     RoomType roomType = RoomType.NORMAL;
 
+    boolean locked = false;
+
+    SoundFile lockSound;
+    SoundFile unlockSound;
+
 
     Room(PApplet p, String name) {
         this.p = p;
         this.name = name;
+        lockSound = new SoundFile(p, "data/sfx/door_close.mp3");
+        unlockSound = new SoundFile(p, "data/sfx/door_open.mp3");
+    }
+
+    void lock() {
+        locked = true;
+        lockSound.play();
+        ArrayList<Vector2> doors = getDoorLocations();
+        for (Vector2 door : doors) {
+            Tile t = getDoorTile(door.x, door.y);
+            t.setLockedDoors(true);
+        }
+    }
+
+    void unlock() {
+        locked = false;
+        unlockSound.play();
+        ArrayList<Vector2> doors = getDoorLocations();
+        for (Vector2 door : doors) {
+            Tile t = getDoorTile(door.x, door.y);
+            t.setLockedDoors(false);
+        }
     }
 
     void addTile(Tile tile) {
         tiles.add(tile);
+    }
+
+    void addDecal(Decal decal) {
+        decals.add(decal);
     }
 
     void setOrigin(Vector2 origin) {
@@ -47,7 +83,8 @@ public class Room implements Cloneable {
             if (tile.collidable)
                 tile.setCollisionShapePosition(new Vector2(this.origin.x, this.origin.y), new Vector2(this.width, this.height));
             if (tile.tileType == TileType.ENEMY_SPAWN) {
-                enemies.get(i).transform.position = tile.getGlobalPosition(this.origin, new Vector2(width, height));
+                enemies.get(i).transform.position.x = tile.getGlobalPosition(this.origin, new Vector2(width, height)).x + enemies.get(i).spriteBottom.width;
+                enemies.get(i).transform.position.y = tile.getGlobalPosition(this.origin, new Vector2(width, height)).y + enemies.get(i).spriteBottom.height;
                 i++;
             }
         }
@@ -65,24 +102,37 @@ public class Room implements Cloneable {
         if (type == RoomType.NORMAL) return;
         Tile tile = getDoorTile(doorLocation.x, doorLocation.y);
         if (tile.tileType == TileType.DOOR) {
+            String closed = this.locked ? "closed" : "open";
             if (type == RoomType.BOSS) {
 //                tile.tileType = TileType.BOSS_ROOM_DOOR;
-                tile.setSpritePath("data/sprites/boss_door.png");
+                tile.name = "Boss room door";
+                tile.setSpritePath("data/sprites/boss_room_door_"+closed+".png");
             } else if (type == RoomType.SHOP) {
+                tile.name = "Shop room door";
 //                    tile.setSpritePath("data/sprites/shop_door.png");
             } else if (type == RoomType.TREASURE) {
+                tile.name = "Treasure room door";
                     tile.setSpritePath("data/sprites/treasure_door.png");
             }
+//            tile.createTextureImage();
         }
     }
 
     public void update(float deltaTime) {
+        if (locked) {
+            if (enemies.isEmpty()) {
+                unlock();
+            }
+        }
         for (Tile tile : tiles) {
-            if (tile.destructible) {
+            if (tile.destructible && tile.collidable) {
                 if (tile.health <= 0) {
-                    tiles.remove(tile);
+//                    tiles.remove(tile);
+                    tile.collidable = false;
+                    tile.collisionShape = null;
                     Signals.UpdateCollisionShapesForPhysics.emit(null);
-                    break;
+
+//                    break;
                 }
             }
         }
@@ -90,7 +140,21 @@ public class Room implements Cloneable {
         for (Enemy enemy: enemies) {
             if (!enemy.alive) {
                 enemies.remove(enemy);
+                Decal d = new Decal(p, enemy.transform.position, "data/sprites/decals/poop_decal.png");
+                addDecal(d);
                 break;
+            }
+        }
+
+        for (Decal decal: decals) {
+            decal.draw();
+        }
+
+        ArrayList<Vector2> doors = getDoorLocations();
+        for (Vector2 door : doors) {
+            Tile tile = getDoorTile(door.x, door.y);
+            if (tile.tileType == TileType.DOOR) {
+                tile.collisionShape.trigger = !this.locked;
             }
         }
     }

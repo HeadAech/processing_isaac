@@ -36,7 +36,7 @@ public class LevelGenerator {
 //        PImage dipSpritesheet = p.loadImage("data/sprites/spritesheet/dip.png");
         Enemy dip = new Enemy(p, new Vector2(p.width/2 - 100, p.height/2), player, "data/sprites/spritesheet/dip.png");
         dip.createCollisionShape();
-        dip.health = 8;
+        dip.health = 3;
 
         PImage dipSprite = p.loadImage("data/sprites/spritesheet/dip.png");
 
@@ -449,19 +449,13 @@ public class LevelGenerator {
             }
             if (tile.tileType == TileType.ENEMY_SPAWN) {
                 Enemy enemy = originalRoom.enemies.getFirst();
-                Enemy newEnemy = new Enemy(p, new Vector2(enemy.transform.position.x, enemy.transform.position.y), player, enemy.spritePath);
-                newEnemy.createCollisionShape();
+                Enemy newEnemy = new Enemy(enemy);
+//                newEnemy.createCollisionShape();
                 newEnemy.health = enemy.health;
                 newEnemy.transform.position.x = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).x;
                 newEnemy.transform.position.y = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).y;
 
-                // Clone animations
-                for (String animName : enemy.animatorBottom.animations.keySet()) {
-                    Animation originalAnimation = enemy.animatorBottom.getAnimation(animName);
-                    Animation newAnimation = originalAnimation;
-                    newEnemy.animatorBottom.addAnimation(animName, newAnimation);
-                }
-                newEnemy.animatorBottom.playAnimation("idle");
+
 
                 uniqueRoom.addEnemy(newEnemy);
             }
@@ -483,6 +477,15 @@ public class LevelGenerator {
             Room room1 = getRoomByOrigin(origin1);
             if (room1 == null) continue;
             room1.discovered = true;
+        }
+    }
+
+    public void onEnterRoom(int idx) {
+        Room room = roomsOnFloor.get(idx);
+        if (room == null) return;
+
+        if (!room.enemies.isEmpty()) {
+            room.lock();
         }
     }
 

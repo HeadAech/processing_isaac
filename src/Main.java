@@ -137,6 +137,7 @@ public class Main extends PApplet {
                         }
                         ui.currentRoomIdx = currentRoomIdx;
                         levelGenerator.discoverNearbyRooms(levelGenerator.roomsOnFloor.get(currentRoomIdx));
+                        levelGenerator.onEnterRoom(currentRoomIdx);
                     }
                 }
             }
@@ -175,6 +176,8 @@ public class Main extends PApplet {
 
         drawBackground();
 
+        checkContinuousInput(deltaTime);
+
         physics.checkCollisionForPlayerWithWalls(player, deltaTime);
 
 
@@ -191,7 +194,6 @@ public class Main extends PApplet {
 
         for (Room room: levelGenerator.roomsOnFloor) {
             if (room != null) {
-                room.update(deltaTime);
                 pushMatrix();
                 translate(room.origin.x * room.width * 52 * room.scale.x, room.origin.y * room.height * 52 * room.scale.y);
                 for (Tile tile: room.tiles) {
@@ -211,6 +213,7 @@ public class Main extends PApplet {
                 popMatrix();
 
 
+                room.update(deltaTime);
 
             }
 
@@ -330,36 +333,33 @@ public class Main extends PApplet {
             levelGenerator.regenerateFloor();
         }
         //shooting
-        if (key == CODED) {
-            if (keyCode == LEFT || keyCode == RIGHT || keyCode == UP || keyCode == DOWN) {
-                Vector2 pDir = new Vector2(player.acceleration.x, player.acceleration.y);
-                switch (keyCode) {
-                    case LEFT:
-                        pDir.x = -1;
-                        break;
-                    case RIGHT:
-                        pDir.x = 1;
-                        break;
-                    case UP:
-                        pDir.y = -1;
-                        break;
-                    case DOWN:
-                        pDir.y = 1;
-                        break;
-                }
 
-                if (projectileDelay > 1/player.firerate) {
-                    projectileDelay = 0;
-                    int randomTearSfx = (int) random(tearsFireSounds.size());
-                    tearsFireSounds.get(randomTearSfx).play();
-                    Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
-                    p.damage = player.damage;
-                    projectiles.add(p);
-                }
-//                println("SHOOTING", pDir.x, pDir.y);
+
+
+    }
+
+    public void checkContinuousInput(float deltaTime) {
+        if (inputManager.getPressed("left") || inputManager.getPressed("right")  || inputManager.getPressed("up")  || inputManager.getPressed("down") ) {
+            Vector2 pDir = new Vector2(player.velocity.x/2, player.velocity.y/2).normalized();
+            if (inputManager.getPressed("left"))
+                pDir.x = -1;
+            else if (inputManager.getPressed("right"))
+                pDir.x = 1;
+            else if (inputManager.getPressed("up"))
+                pDir.y = -1;
+            else if (inputManager.getPressed("down"))
+                pDir.y = 1;
+
+            if (projectileDelay > 1/player.firerate) {
+                projectileDelay = 0;
+                int randomTearSfx = (int) random(tearsFireSounds.size());
+                tearsFireSounds.get(randomTearSfx).play();
+                Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
+                p.damage = player.damage;
+                projectiles.add(p);
             }
+//                println("SHOOTING", pDir.x, pDir.y);
         }
-
     }
 
     public void keyReleased() {
