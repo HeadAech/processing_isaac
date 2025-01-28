@@ -14,7 +14,9 @@ enum TileType{
     POOP,
     ENEMY_SPAWN,
     DOOR_CLOSED,
-    ITEM_PEDESTAL
+    ITEM_PEDESTAL,
+    SPIKES,
+    YELLOW_BUTTON
 }
 
 public class Tile implements Cloneable {
@@ -52,6 +54,8 @@ public class Tile implements Cloneable {
 
     Item item;
 
+    boolean doNotDraw = false;
+
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
@@ -60,6 +64,7 @@ public class Tile implements Cloneable {
         this.tileType = getTileType(sign);
         createTextureImage();
         onProjectileEnteredCollisionShape();
+        onItemPickedUpCollisionShape();
     }
 
     Tile (PApplet p, char sign, TileType type, String name, String spritePath) {
@@ -69,6 +74,7 @@ public class Tile implements Cloneable {
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = type;
         onProjectileEnteredCollisionShape();
+        onItemPickedUpCollisionShape();
     }
 
     Tile(PApplet p, Tile tile) {
@@ -82,6 +88,7 @@ public class Tile implements Cloneable {
         this.textureImage = tile.textureImage;
         createTextureImage();
         onProjectileEnteredCollisionShape();
+        onItemPickedUpCollisionShape();
     }
 
     public void setItem(Item item) {
@@ -100,10 +107,29 @@ public class Tile implements Cloneable {
         });
     }
 
+    private void onItemPickedUpCollisionShape() {
+        Signals.ItemPickedUpUUID.connect(uuid -> {
+            if (collisionShape == null) return;
+
+            if (collisionShape.uuid.equals(uuid)) {
+                if (item != null) {
+                    Signals.ItemPickedUp.emit(this.item);
+                    this.item = null;
+                    this.tileType = TileType.FLOOR;
+                    this.collisionShape = null;
+                    this.collidable = false;
+                    this.doNotDraw = true;
+                    Signals.UpdateCollisionShapesForPhysics.emit(null);
+                }
+            }
+        });
+    }
+
     public void damage(float damage) {
         health -= damage;
         if (tileType == TileType.POOP) {
             if (health <= 0) {
+                Signals.PlaySound.emit("plop");
                 this.spritePath = "data/sprites/poop_destroyed.png";
             } else if (health <= 2) {
                 this.spritePath = "data/sprites/poop_damaged_2.png";
@@ -135,6 +161,9 @@ public class Tile implements Cloneable {
         }
         if (tileType == TileType.ITEM_PEDESTAL) {
             this.textureImage.resize(27,23);
+        }
+        if (tileType == TileType.YELLOW_BUTTON) {
+            this.textureImage.resize(52, 52);
         }
         p.noSmooth();
     }
@@ -195,6 +224,7 @@ public class Tile implements Cloneable {
     }
 
     public void draw(float deltaTime) {
+        if (this.doNotDraw) return;
         p.pushMatrix();
 
         // Translate to the center of the image
@@ -260,8 +290,10 @@ public class Tile implements Cloneable {
             case '.' -> TileType.FLOOR;
             case 'R' -> TileType.ROCK;
             case 'P' -> TileType.POOP;
-            case '+', ';' -> TileType.ENEMY_SPAWN;
+            case '+', ';', '@' -> TileType.ENEMY_SPAWN;
             case '?' -> TileType.ITEM_PEDESTAL;
+            case '^' -> TileType.SPIKES;
+            case '&' -> TileType.YELLOW_BUTTON;
             default -> TileType.FLOOR;
         };
     }

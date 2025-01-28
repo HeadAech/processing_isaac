@@ -42,32 +42,27 @@ public class Main extends PApplet {
 
     PImage heartsSpritesheet;
 
-    SoundFile basementMusic;
-
     SoundManager soundManager;
+
+    boolean shouldRestart = false;
 
     public void setup(){
         windowTitle("The Binding of Isaac: Retarded");
         frameRate(120);
 //        noSmooth();
+        shouldRestart = false;
         soundManager = new SoundManager(this);
 
         player = new Player(this, new Vector2((float) width /2, (float) height /2), "data/sprites/spritesheet/isaac_spritesheet.png");
         player.setScale(1.5f);
         player.createCollisionShape();
+        player.collisionShape.setSize(new Vector2(player.spriteBottom.width, player.spriteBottom.height - 10));
+        player.collisionShape.offsetY = 15;
+        player.collisionShape.offsetX = 7;
 
         projectiles = new ArrayList<>();
 
         enemies = new ArrayList<>();
-
-//        Entity enemy = new Enemy(this, new Vector2(width/2, height/2), player);
-//        enemy.setScale(0.2f);
-
-//        enemies.add(enemy);
-
-
-        basementMusic = new SoundFile(this, "data/music/basement_theme.mp3");
-
 
         heartsSpritesheet = loadImage("data/sprites/spritesheet/hearts.png");
         ui = new Interface(this, heartsSpritesheet);
@@ -84,6 +79,7 @@ public class Main extends PApplet {
         levelGenerator = new LevelGenerator(this);
         levelGenerator.setPlayer(player);
 
+        levelGenerator.prepareBosses();
         levelGenerator.prepareItems();
         levelGenerator.prepareEnemies();
         levelGenerator.prepareTiles();
@@ -129,6 +125,20 @@ public class Main extends PApplet {
                         ui.currentRoomIdx = currentRoomIdx;
                         levelGenerator.discoverNearbyRooms(levelGenerator.roomsOnFloor.get(currentRoomIdx));
                         levelGenerator.onEnterRoom(currentRoomIdx);
+                        levelGenerator.currentRoomIdx = currentRoomIdx;
+                        if (nextRoom.roomType == RoomType.TREASURE && !nextRoom.entered) {
+                            soundManager.playRandomSound("treasure_room_enter");
+                            nextRoom.entered = true;
+                        }
+                        if (nextRoom.roomType == RoomType.BOSS && !nextRoom.entered && !nextRoom.enemies.isEmpty()) {
+                            soundManager.playMusic("boss_theme");
+                            nextRoom.entered = true;
+                        } else if (nextRoom.roomType == RoomType.BOSS && nextRoom.enemies.isEmpty()) {
+                            soundManager.playMusic("boss_beaten_theme");
+                        }
+                        else if (!soundManager.basementTheme.getFirst().isPlaying()) {
+                            soundManager.playMusic("basement_theme");
+                        }
                     }
                 }
             }
@@ -157,7 +167,14 @@ public class Main extends PApplet {
 
 
 
-//        basementMusic.play();
+        soundManager.playMusic("basement_theme");
+
+        Signals.RestartGame.connect(data -> {
+            soundManager.stopMusic();
+            shouldRestart = true;
+            exit();
+//            exit(); // Close the current instance
+        });
     }
 
     public void draw(){
@@ -165,8 +182,6 @@ public class Main extends PApplet {
         float currentTime = millis();
         deltaTime = (currentTime - lastFrameTime) / 1000.0f;
         lastFrameTime = currentTime;
-
-//        println("Delta time: " + deltaTime);
 
         drawBackground();
 
@@ -191,42 +206,44 @@ public class Main extends PApplet {
                 pushMatrix();
                 translate(room.origin.x * room.width * 52 * room.scale.x, room.origin.y * room.height * 52 * room.scale.y);
                 for (Tile tile: room.tiles) {
+                    if (tile.tileType == TileType.YELLOW_BUTTON && !room.enemies.isEmpty()) {
+                        tile.collisionShape.triggered = true;
+                        continue;
+                    } else if (tile.tileType == TileType.YELLOW_BUTTON && room.enemies.isEmpty()) {
+                        tile.collisionShape.triggered = false;
+                    }
                     tile.draw(deltaTime);
                 }
                 popMatrix();
 
-                pushMatrix();
+//                pushMatrix();
                 for (Tile tile: room.tiles) {
                     if (tile.collisionShape != null && tile.drawCollider){
-                        tile.drawCollider();
+//                        tile.drawCollider();
                     }
                     if (tile.collisionShape != null) {
                         tile.collisionShape.updateTrigger(deltaTime);
                     }
                 }
-                popMatrix();
-
+//                popMatrix();
 
                 room.update(deltaTime);
-
             }
-
 
         }
 
-        for (Entity enemy: currentRoom.enemies) {
+        for (int i = currentRoom.enemies.size() - 1; i >= 0; i--) {
+            Enemy enemy = currentRoom.enemies.get(i);
             enemy._update(deltaTime);
             enemy._display();
-            enemy.drawCollider();
+//            enemy.drawCollider();
             physics.checkCollisionForEntitiesWithWalls(enemy);
 
         }
 
-//        translate(0,0);
-
         for (int i = projectiles.size() - 1; i >= 0; i--) {
             Projectile projectile = projectiles.get(i);
-            projectile._update();
+            projectile._update(deltaTime);
             physics.checkCollisionForProjectiles(projectile, deltaTime);
             physics.checkCollisionForProjectileWithEntity(projectile, currentRoom.enemies, player);
             if (!projectile.checkIfValid()) {
@@ -235,17 +252,12 @@ public class Main extends PApplet {
                     projectile.onDestroy();
                 } else {
                     soundManager.playRandomSound("tear_impact");
-                    projectiles.remove(i);  // Remove expired projectile
+                    if (!projectiles.isEmpty())
+                        projectiles.remove(i);  // Remove expired projectile
                 }
             }
 
-
         }
-
-
-
-
-
 
         projectileDelay += deltaTime;
         player._update(deltaTime);
@@ -253,7 +265,6 @@ public class Main extends PApplet {
         if (player.showCollider) {
             player.drawCollider();
         }
-
 
         pushMatrix();
         translate(camera.x - width/2, camera.y - height/2);
@@ -317,6 +328,10 @@ public class Main extends PApplet {
             player.damage(1);
         }
 
+        if (key == 'r') {
+            shouldRestart = true;
+        }
+
         if (key == '§') {
             println(player.transform.position.x, player.transform.position.y, player.transform.rotation);
             player.transform.position.x = width/2;
@@ -333,7 +348,7 @@ public class Main extends PApplet {
 
     public void checkContinuousInput(float deltaTime) {
         if (inputManager.getPressed("left") || inputManager.getPressed("right")  || inputManager.getPressed("up")  || inputManager.getPressed("down") ) {
-            Vector2 pDir = new Vector2(player.velocity.x/2, player.velocity.y/2).normalized();
+            Vector2 pDir = new Vector2(player.velocity.x/4, player.velocity.y/4).normalized();
             if (inputManager.getPressed("left"))
                 pDir.x = -1;
             else if (inputManager.getPressed("right"))
@@ -343,11 +358,13 @@ public class Main extends PApplet {
             else if (inputManager.getPressed("down"))
                 pDir.y = 1;
 
-            if (projectileDelay > 1/player.firerate) {
+            if (projectileDelay > 1/player.getFirerate()) {
                 projectileDelay = 0;
                 soundManager.playRandomSound("tear_fire");
-                Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
-                p.damage = player.damage;
+                Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /3), pDir);
+                p.damage = player.getDamage();
+                p.lifeSpan = (player.getRange() / 5) * 1000;
+                p.shotSpeed = player.shotSpeed;
                 projectiles.add(p);
             }
 //                println("SHOOTING", pDir.x, pDir.y);

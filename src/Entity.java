@@ -57,7 +57,9 @@ public class Entity {
 
     public float speed = 1;
     public float firerate = 2.73f;
+    public float firerateMultiplier = 1;
     public float damage = 1;
+    public float damageMultiplier = 1;
     public float range = 7.50f;
     public float shotSpeed = 2;
     public float luck = 0.0f;
@@ -178,6 +180,7 @@ public class Entity {
                 }
             }
         }
+
 
         input();
         velocity.x += acceleration.x * (speed * 80);
@@ -332,6 +335,22 @@ public class Entity {
     public void resetVelocity() {
         velocity.x = 0;
         velocity.y = 0;
+    }
+
+    public float getDamage() {
+        return damage * damageMultiplier;
+    }
+
+    public float getFirerate() {
+        return firerate * firerateMultiplier;
+    }
+
+    public float getSpeed() {
+        return speed;
+    }
+
+    public float getRange() {
+        return range;
     }
 
 }

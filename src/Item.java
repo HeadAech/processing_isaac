@@ -2,6 +2,9 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PImage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 enum ItemType {
 
 }
@@ -21,6 +24,8 @@ public class Item {
 
     float animationSpeed = 1.2f;
 
+    Map<String, Float> statsModifier = new HashMap<String, Float>();
+
     Item(PApplet p, Vector2 position) {
         this.p = p;
         this.position = new Vector2(position);
@@ -30,13 +35,15 @@ public class Item {
         this.p = item.p;
         this.position = new Vector2(item.position);
         this.image = item.image;
+        this.quality = item.quality;
+        this.statsModifier = item.statsModifier;
     }
 
     float target = minY;
 
     public void draw(float deltaTime) {
 
-        p.pushMatrix();
+//        p.pushMatrix();
 
         position.y = Util.lerp(position.y, target, deltaTime * animationSpeed);
 
@@ -49,7 +56,7 @@ public class Item {
         p.imageMode(PConstants.CENTER);
         p.image(image, position.x + image.width - image.width/3, position.y, image.width, image.height);
 
-        p.popMatrix();
+//        p.popMatrix();
     }
 
     public void setPosition(Vector2 position) {
@@ -69,6 +76,10 @@ public class Item {
     public void loadImage(String path) {
         this.image = p.loadImage(path);
         this.image.resize(52, 52);
+    }
+
+    public void addStatModifier(String key, float value) {
+        statsModifier.put(key, value);
     }
 
 

@@ -5,7 +5,7 @@ enum CollisionShapeType {
 }
 
 enum TriggerType {
-    DOOR, EMPTY, ITEM
+    DOOR, EMPTY, ITEM, SPIKES, BUTTON
 }
 
 public class CollisionShape implements Cloneable {
@@ -100,7 +100,7 @@ public class CollisionShape implements Cloneable {
     public void updateTrigger(float delta) {
         if (!trigger) return;
 
-        if (triggered) {
+        if (triggered && triggerType != TriggerType.BUTTON) {
             currentTime += delta;
             if (currentTime >= cooldown) {
                 triggered = false;

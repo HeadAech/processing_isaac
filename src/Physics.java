@@ -15,12 +15,14 @@ public class Physics {
             currentTime += deltaTime;
 
         for (CollisionShape collisionShape : collisionShapes) {
-            boolean collision = false;
-            if (isCollidingWithBoxShape(player.collisionShape, collisionShape)) {
-                collision = true;
-            }
+            boolean collision = isCollidingWithBoxShape(player.collisionShape, collisionShape);
 
             if (collision && collisionShape.isTrigger() ) {
+                if (collisionShape.triggerType == TriggerType.SPIKES) {
+                    Signals.DamageUUID.emit(new DamageUUID(player.collisionShape.uuid, 1));
+                    currentTime = 0;
+                    collision = false;
+                }
                 if (currentTime >= triggerCooldown) {
                     if (collisionShape.triggered) continue;
                     collision = false;
@@ -34,8 +36,14 @@ public class Physics {
                     if (collisionShape.triggerType == TriggerType.ITEM) {
                         collisionShape.triggered = true;
                         System.out.println("ITEM");
+                        Signals.ItemPickedUpUUID.emit(collisionShape.uuid);
                         currentTime = 0;
                     }
+                    if (collisionShape.triggerType == TriggerType.BUTTON && !collisionShape.triggered) {
+                        Signals.RestartGame.emit(null);
+                        currentTime = 0;
+                    }
+
                 }
             }
 
@@ -78,6 +86,7 @@ public class Physics {
         for (CollisionShape collisionShape : collisionShapes) {
             boolean collision = false;
             if (isCollidingWithBoxShape(projectile.collisionShape, collisionShape)) {
+                if (collisionShape.trigger) continue;
                 Signals.ProjectileDestroyed.emit(projectile.uuid);
                 Signals.ProjectileEnteredCollisionShape.emit(collisionShape.uuid);
             }

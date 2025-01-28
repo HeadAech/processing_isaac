@@ -8,7 +8,25 @@ class DamageUUID {
         this.uuid = uuid;
         this.damage = damage;
     }
+}
 
+class ItemUUID {
+    UUID uuid;
+    Item item;
+
+    ItemUUID(UUID uuid, Item item) {
+        this.uuid = uuid;
+        this.item = item;
+    }
+}
+
+class SpawnEnemy {
+    EnemyType type;
+    Vector2 position;
+    SpawnEnemy(EnemyType type, Vector2 position) {
+        this.type = type;
+        this.position = position;
+    }
 }
 
 public class Signals {
@@ -26,4 +44,13 @@ public class Signals {
     static Signal<Projectile> CreateProjectile = new Signal<>();
 
     static Signal<String> PlaySound = new Signal<>();
+    static Signal<String> PlayMusic = new Signal<>();
+    static Signal<Object> StopMusic = new Signal<>();
+
+    static Signal<Item> ItemPickedUp = new Signal<>();
+    static Signal<UUID> ItemPickedUpUUID = new Signal<>();
+
+    static Signal<SpawnEnemy> SpawnEnemy = new Signal<>();
+
+    static Signal<Object> RestartGame = new Signal<>();
 }

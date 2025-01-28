@@ -38,6 +38,8 @@ public class Room implements Cloneable {
     SoundFile lockSound;
     SoundFile unlockSound;
 
+    boolean entered = false;
+
 
     Room(PApplet p, String name) {
         this.p = p;
@@ -118,6 +120,32 @@ public class Room implements Cloneable {
         }
     }
 
+    public boolean isBossPresent() {
+        for (Enemy enemy : enemies) {
+            if (enemy.isBoss) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public float getBossHealth() {
+        for (Enemy enemy: enemies) {
+            if (enemy.isBoss) {
+                return enemy.health;
+            }
+        }
+        return 0;
+    }
+    public float getBossMaxHealth() {
+        for (Enemy enemy : enemies) {
+            if (enemy.isBoss) {
+                return enemy.maxHealth;
+            }
+        }
+        return 0;
+    }
+
     public void update(float deltaTime) {
         if (locked) {
             if (enemies.isEmpty()) {
@@ -139,9 +167,15 @@ public class Room implements Cloneable {
 
         for (Enemy enemy: enemies) {
             if (!enemy.alive) {
+                if (enemy.type == EnemyType.DINGLE || enemy.type == EnemyType.DIP) {
+                    Decal d = new Decal(p, enemy.transform.position, "data/sprites/decals/poop_decal.png");
+                    addDecal(d);
+                } else {
+                    Decal d = new Decal(p, enemy.transform.position, "data/sprites/decals/blood_decal.png");
+                    addDecal(d);
+                }
+                Signals.PlaySound.emit("plop");
                 enemies.remove(enemy);
-                Decal d = new Decal(p, enemy.transform.position, "data/sprites/decals/poop_decal.png");
-                addDecal(d);
                 break;
             }
         }

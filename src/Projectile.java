@@ -15,7 +15,7 @@ public class Projectile {
     Vector2 direction = new Vector2(0, 0);
 
     float damage = 10;
-    private float shotSpeed = 5.0f;
+    float shotSpeed = 5.0f;
 
     int spawnTime = 0;
     float lifeSpan = 2000;
@@ -52,10 +52,12 @@ public class Projectile {
     }
 
     public void createCollisionShape() {
-        Vector2 size = new Vector2(sprite.width * transform.scale.x, sprite.height * transform.scale.y);
+        Vector2 size = new Vector2((sprite.width * transform.scale.x) / 2, (sprite.height * transform.scale.y) / 2);
 //        Vector2 size = new Vector2(300, 300);
         Vector2 pos = new Vector2(transform.position.x - size.x/2, transform.position.y - size.y/2);
         this.collisionShape = new CollisionShape(pos, size);
+        this.collisionShape.offsetY = (sprite.height * transform.scale.y) / 4;
+        this.collisionShape.offsetX = (sprite.width * transform.scale.x) / 4;
 
     }
 
@@ -73,31 +75,30 @@ public class Projectile {
         this.spawnTime = p.millis();
     }
 
-    public void _update() {
-        this.transform.position = this.transform.position.plus(this.direction.multiply(shotSpeed));
+    public void _update(float deltaTime) {
+        this.transform.position = this.transform.position.plus(direction.multiply(shotSpeed * 5));
         this.collisionShape.setPosition(transform.position);
         _display();
     }
 
     public void _display() {
-        p.pushMatrix();
+//        p.pushMatrix();
 
         p.image(sprite, transform.position.x + sprite.width/2, transform.position.y + sprite.height/2);
 
-        p.popMatrix();
+//        p.popMatrix();
 //        drawCollider();
-        drawCollider();
 
     }
 
     public void drawCollider() {
-        p.pushMatrix();
+//        p.pushMatrix();
 
         p.noFill();
         p.stroke(255,0,0);
         p.rect(collisionShape.left, collisionShape.top, collisionShape.size.x, collisionShape.size.y);
         p.noStroke();
-        p.popMatrix();
+//        p.popMatrix();
     }
 
 

@@ -85,18 +85,24 @@ public class Interface {
 
     public void _display() {
         p.textAlign(p.LEFT);
-        p.pushMatrix();
+//        p.pushMatrix();
         p.color(0);
         p.fill(255);
 
-       drawHearts();
-       drawMinimap();
-       drawStats();
+
+
+
 
         String fps = "fps: " + p.round(p.frameRate);
         p.text(fps, p.width - p.textWidth(fps) - 5, p.height - p.textAscent());
 
-        p.popMatrix();
+//        p.popMatrix();
+        drawHearts();
+        drawMinimap();
+        drawStats();
+        if (levelGenerator.roomsOnFloor.get(levelGenerator.currentRoomIdx).isBossPresent()) {
+            drawBossHealthBar();
+        }
     }
 
     void drawMinimap() {
@@ -118,7 +124,7 @@ public class Interface {
         for (int i = 0; i < levelGenerator.roomsOnFloor.size(); i++) {
             Room room = levelGenerator.roomsOnFloor.get(i);
 
-//            if (!room.discovered) continue;
+            if (!room.discovered) continue;
 
             int x = (int) (room.origin.x * minimapTileWidth);
             int y = (int) (room.origin.y * minimapTileHeight);
@@ -194,8 +200,8 @@ public class Interface {
         p.textAlign(PApplet.CENTER, PApplet.CENTER);
 
         String speed = String.format("%.2f", player.speed);
-        String firerate = String.format("%.2f", player.firerate);
-        String damage = String.format("%.2f", player.damage);
+        String firerate = String.format("%.2f", player.getFirerate());
+        String damage = String.format("%.2f", player.getDamage());
         String range = String.format("%.2f", player.range);
         String shotspeed = String.format("%.2f", player.shotSpeed);
         String luck = String.format("%.2f", player.luck);
@@ -227,6 +233,35 @@ public class Interface {
 
         p.image(luckIcon, x, y, statIconWidth, statIconHeight);
         p.text(luck, x + statIconWidth, y);
+
+        p.popMatrix();
+    }
+
+    void drawBossHealthBar() {
+        p.pushMatrix();
+
+        // Target width and height for the health bar
+        float targetWidth = 250;
+        float barHeight = 20;
+
+        // Get boss's current health and maximum health
+        float bossHealth = levelGenerator.roomsOnFloor.get(currentRoomIdx).getBossHealth();
+        float bossMaxHealth = levelGenerator.roomsOnFloor.get(currentRoomIdx).getBossMaxHealth();
+
+        // Calculate the proportional width
+        float proportionalWidth = (bossHealth / bossMaxHealth) * targetWidth;
+        if (bossHealth <= 0) {
+            p.popMatrix();
+            return;
+        }
+
+        // Draw the background (empty bar)
+        p.fill(50); // Dark gray or black
+        p.rect(p.width/2 - targetWidth/2, p.height - barHeight*2, targetWidth, barHeight);
+
+        // Draw the foreground (current health)
+        p.fill(255, 0, 50); // Red
+        p.rect(p.width/2 - targetWidth/2, p.height - barHeight*2, proportionalWidth, barHeight);
 
         p.popMatrix();
     }

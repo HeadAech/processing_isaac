@@ -1,32 +1,80 @@
 import processing.core.PApplet;
 import processing.core.PImage;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Player extends Entity {
 
     float invulnerability = 1.0f;
     float lastDamageTime = 0.0f;
 
+    ArrayList<Item> pickedItems = new ArrayList<>();
+
     public Player(PApplet p, String spritePath) {
         super(p, spritePath);
         setPlayerSprite();
         setPlayerStats();
+        onItemPickedUp();
     }
 
     public Player(PApplet p, Vector2 position, String spritePath) {
         super(p, position, spritePath);
         setPlayerSprite();
         setPlayerStats();
+        onItemPickedUp();
+    }
+
+    private void onItemPickedUp() {
+        Signals.ItemPickedUp.connect(item -> {
+            pickedItems.add(item);
+            Signals.PlaySound.emit("powerup");
+
+            Map<String, Float> statModifiers = item.statsModifier;
+            if (statModifiers.containsKey("damage"))
+                damage += statModifiers.get("damage");
+            if (statModifiers.containsKey("firerate"))
+                firerate += statModifiers.get("firerate");
+            if (statModifiers.containsKey("speed"))
+                speed += statModifiers.get("speed");
+            if (statModifiers.containsKey("range"))
+                range += statModifiers.get("range");
+
+            if (getDamage() <= 0)
+                damage = 0.3f;
+            if (damageMultiplier <= 0)
+                damageMultiplier = 0.2f;
+            if (getSpeed() <= 0.1f)
+                speed = 0.1f;
+
+            if (statModifiers.containsKey("damageMultiplier"))
+                damageMultiplier += statModifiers.get("damageMultiplier");
+            if (statModifiers.containsKey("firerateMultiplier"))
+                firerateMultiplier += statModifiers.get("firerateMultiplier");
+
+            if (statModifiers.containsKey("healthUp")) {
+                if (maxHealth < 24) {
+                    health += statModifiers.get("healthUp");
+                    maxHealth += statModifiers.get("healthUp");
+                } else {
+                    health = 24;
+                    maxHealth = 24;
+                }
+            }
+        });
     }
 
     private void setPlayerStats() {
         this.damage = 3.50f;
-        super.health = 6;
-        super.maxHealth = 20;
+        super.health = 10;
+        super.maxHealth = 10;
         super.speed = 1;
         super.firerate = 2.73f;
         super.range = 7.50f;
-        super.shotSpeed = 2;
+        super.shotSpeed = 1;
         super.luck = 0.0f;
+        showCollider = false;
         canGoOutOfBounds = true;
         PImage spritesheet = p.loadImage("data/sprites/spritesheet/isaac_spritesheet.png");
         //walk top-bottom
@@ -133,6 +181,9 @@ public class Player extends Entity {
         super.animatorTop.addAnimation("shootLeft", shootLeft);
     }
 
+    float timeToLeave = 1.5f;
+    float lastTimeToLeave = 0;
+
     @Override
     public void _update(float deltaTime) {
         Vector2 direction = getDirection();
@@ -153,6 +204,13 @@ public class Player extends Entity {
         }
 
         lastDamageTime += deltaTime;
+
+        if (!alive) {
+            lastTimeToLeave += deltaTime;
+            if (lastTimeToLeave >= timeToLeave) {
+                Signals.RestartGame.emit(null);
+            }
+        }
         super._update(deltaTime);
     }
 

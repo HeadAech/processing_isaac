@@ -17,6 +17,7 @@ public class LevelGenerator {
 
     ArrayList<Enemy> enemies = new ArrayList<>();
 
+
     ArrayList<Item> items = new ArrayList<>();
 
     int maxRoomsOnFloor = 15;
@@ -25,9 +26,21 @@ public class LevelGenerator {
 
     Entity player;
 
+    int currentRoomIdx = 0;
+
     LevelGenerator(PApplet p) {
         this.p = p;
 
+        Signals.SpawnEnemy.connect(SpawnEnemy -> {
+            EnemyType type = SpawnEnemy.type;
+            Vector2 position = new Vector2(SpawnEnemy.position);
+
+            Enemy e = new Enemy(getEnemy(type), type);
+            e.transform.position.x = position.x;
+            e.transform.position.y = position.y;
+
+            roomsOnFloor.get(currentRoomIdx).addEnemy(e);
+        });
     }
 
     public void setPlayer(Entity player) {
@@ -39,7 +52,44 @@ public class LevelGenerator {
         Item bloodOfTheMartyr = new Item(p, new Vector2(0, 0));
         bloodOfTheMartyr.loadImage("data/sprites/items/blood_of_the_martyr.png");
         bloodOfTheMartyr.setQuality(3);
+        bloodOfTheMartyr.addStatModifier("damage", 1);
+        bloodOfTheMartyr.addStatModifier("range", 2);
+        bloodOfTheMartyr.addStatModifier("firerateMultiplier", 0.1f);
         items.add(bloodOfTheMartyr);
+
+        Item belt = new Item(p, new Vector2(0, 0));
+        belt.loadImage("data/sprites/items/belt.png");
+        belt.setQuality(1);
+        belt.addStatModifier("speed", 0.2f);
+        items.add(belt);
+
+        Item cricketsHead = new Item(p, new Vector2(0, 0));
+        cricketsHead.loadImage("data/sprites/items/crickets_head.png");
+        cricketsHead.setQuality(4);
+        cricketsHead.addStatModifier("damageMultiplier", 1f);
+        items.add(cricketsHead);
+
+        Item meat = new Item(p, new Vector2(0, 0));
+        meat.loadImage("data/sprites/items/meat.png");
+        meat.setQuality(1);
+        meat.addStatModifier("damage", 0.3f);
+        meat.addStatModifier("healthUp", 2);
+        items.add(meat);
+
+        Item smallRock = new Item(p, new Vector2(0, 0));
+        smallRock.loadImage("data/sprites/items/small_rock.png");
+        smallRock.setQuality(2);
+        smallRock.addStatModifier("damage", 1f);
+        smallRock.addStatModifier("speed", -0.2f);
+        items.add(smallRock);
+
+        Item soyMilk = new Item(p, new Vector2(0, 0));
+        soyMilk.loadImage("data/sprites/items/soy_milk.png");
+        soyMilk.setQuality(2);
+        soyMilk.addStatModifier("firerateMultiplier", 5f);
+        soyMilk.addStatModifier("damageMultiplier", -0.7f);
+        soyMilk.addStatModifier("damage", -2);
+        items.add(soyMilk);
 
     }
 
@@ -48,7 +98,7 @@ public class LevelGenerator {
         //dip
         Enemy dip = new Enemy(p, new Vector2(p.width/2 - 100, p.height/2), player, "data/sprites/spritesheet/dip.png", EnemyType.DIP);
         dip.createCollisionShape();
-        dip.health = 3;
+        dip.health = 5.5f;
 
         PImage dipSprite = p.loadImage("data/sprites/spritesheet/dip.png");
 
@@ -67,7 +117,7 @@ public class LevelGenerator {
         //pooter
         Enemy pooter = new Enemy(p, new Vector2(0,0), player, "data/sprites/spritesheet/pooter.png", EnemyType.POOTER);
         pooter.createCollisionShape();
-        pooter.health = 7;
+        pooter.health = 8.5f;
 
         PImage pooterSprite = p.loadImage("data/sprites/spritesheet/pooter.png");
 
@@ -104,6 +154,104 @@ public class LevelGenerator {
 
         enemies.add(pooter);
 
+
+
+    }
+
+    public void prepareBosses() {
+        Enemy dingle = new Enemy(p, new Vector2(0,0), player, "data/sprites/spritesheet/dingle_spritesheet.png", EnemyType.DINGLE);
+//        dingle.spriteBottom.resize(300, 300);
+
+//        dingle.transform.scale.x = 2;
+//        dingle.transform.scale.y = 2;
+        dingle.spriteBottom.resize(96, 96);
+        dingle.createCollisionShape();
+        dingle.health = 650;
+        dingle.isBoss = true;
+
+        PImage dingleSprite = p.loadImage("data/sprites/spritesheet/dingle_spritesheet.png");
+
+        Animation dingleIdle = new Animation(p, dingleSprite, dingle.spriteTop);
+        dingleIdle.frameSize.x = 96;
+        dingleIdle.frameSize.y = 96;
+        dingleIdle.setPlayStyle(PlayStyle.PS_LOOP);
+        dingleIdle.addFrame(new Vector2(0, 0));
+        dingleIdle.addFrame(new Vector2(1, 0));
+        dingleIdle.addFrame(new Vector2(2, 0));
+        dingleIdle.addFrame(new Vector2(3, 0));
+        dingleIdle.addFrame(new Vector2(4, 0));
+        dingleIdle.setDuration(0.1f);
+        dingle.animatorBottom.addAnimation("idle", dingleIdle);
+        dingle.animatorBottom.playAnimation("idle");
+
+        Animation dingleCharge = new Animation(p, dingleSprite, dingle.spriteBottom);
+        dingleCharge.frameSize.x = 96;
+        dingleCharge.frameSize.y = 96;
+        dingleCharge.setPlayStyle(PlayStyle.PS_NORMAL);
+        dingleCharge.addFrame(new Vector2(0, 1));
+        dingleCharge.addFrame(new Vector2(1, 1));
+        dingleCharge.addFrame(new Vector2(2, 1));
+        dingleCharge.addFrame(new Vector2(3, 1));
+        dingleCharge.addFrame(new Vector2(4, 1));
+        dingleCharge.addFrame(new Vector2(5, 1));
+        dingleCharge.setDuration(0.3f);
+        dingle.animatorBottom.addAnimation("charge", dingleCharge);
+//        dingle.animatorBottom.playAnimation("charge");
+
+        Animation dingleExhausted = new Animation(p, dingleSprite, dingle.spriteBottom);
+        dingleExhausted.frameSize.x = 96;
+        dingleExhausted.frameSize.y = 96;
+        dingleExhausted.setPlayStyle(PlayStyle.PS_PINGPONG);
+        dingleExhausted.addFrame(new Vector2(0, 2));
+        dingleExhausted.addFrame(new Vector2(1, 2));
+        dingleExhausted.addFrame(new Vector2(2, 2));
+        dingleExhausted.addFrame(new Vector2(3, 2));
+        dingleExhausted.addFrame(new Vector2(4, 2));
+        dingleExhausted.setDuration(0.2f);
+        dingle.animatorBottom.addAnimation("exhausted", dingleExhausted);
+
+        Animation dingleSpawn = new Animation(p, dingleSprite, dingle.spriteBottom);
+        dingleSpawn.frameSize.x = 96;
+        dingleSpawn.frameSize.y = 96;
+        dingleSpawn.setPlayStyle(PlayStyle.PS_PINGPONG);
+        dingleSpawn.addFrame(new Vector2(0, 3));
+        dingleSpawn.addFrame(new Vector2(1, 3));
+        dingleSpawn.addFrame(new Vector2(2, 3));
+        dingleSpawn.setDuration(0.2f);
+        dingle.animatorBottom.addAnimation("spawn", dingleSpawn);
+
+        Animation dingleShoot = new Animation(p, dingleSprite, dingle.spriteBottom);
+        dingleShoot.frameSize.x = 96;
+        dingleShoot.frameSize.y = 96;
+        dingleShoot.setPlayStyle(PlayStyle.PS_NORMAL);
+        dingleShoot.addFrame(new Vector2(0, 4));
+        dingleShoot.addFrame(new Vector2(1, 4));
+        dingleShoot.addFrame(new Vector2(2, 4));
+        dingleShoot.addFrame(new Vector2(3, 4));
+        dingleShoot.addFrame(new Vector2(4, 4));
+        dingleShoot.addFrame(new Vector2(5, 4));
+        dingleShoot.addFrame(new Vector2(6, 4));
+        dingleShoot.addFrame(new Vector2(7, 4));
+        dingleShoot.setDuration(0.18f);
+        dingle.animatorBottom.addAnimation("shoot", dingleShoot);
+
+        Animation dingleDeath = new Animation(p, dingleSprite, dingle.spriteBottom);
+        dingleDeath.frameSize.x = 96;
+        dingleDeath.frameSize.y = 96;
+        dingleDeath.setPlayStyle(PlayStyle.PS_NORMAL);
+        dingleDeath.addFrame(new Vector2(0, 5));
+        dingleDeath.addFrame(new Vector2(1, 5));
+        dingleDeath.addFrame(new Vector2(2, 5));
+        dingleDeath.addFrame(new Vector2(3, 5));
+        dingleDeath.addFrame(new Vector2(4, 5));
+        dingleDeath.addFrame(new Vector2(5, 5));
+        dingleDeath.addFrame(new Vector2(6, 5));
+        dingleDeath.addFrame(new Vector2(7, 5));
+        dingleDeath.addFrame(new Vector2(8, 5));
+        dingleDeath.setDuration(0.1f);
+        dingle.animatorBottom.addAnimation("death", dingleDeath);
+
+        enemies.add(dingle);
     }
 
     public void prepareTiles() {
@@ -235,11 +383,25 @@ public class LevelGenerator {
                                     floorTile.setPosition(tile.position);
                                     room.addTile(floorTile);
                                 }
+                                if (tile.tileType == TileType.YELLOW_BUTTON) {
+                                    tile.collisionShape.setSize(new Vector2(tile.width * tile.scale.x, tile.height * tile.scale.y));
+                                    Tile floorTile = new Tile(p, getTile('.'));
+                                    floorTile.setPosition(tile.position);
+                                    room.addTile(floorTile);
+                                }
+                                if (tile.tileType == TileType.SPIKES) {
+                                    tile.collisionShape.setSize(new Vector2(tile.width * tile.scale.x, tile.height * tile.scale.y));
+                                    tile.collisionShape.setTriggerType(TriggerType.SPIKES);
+                                    Tile floorTile = new Tile(p, getTile('.'));
+                                    floorTile.setPosition(tile.position);
+                                    room.addTile(floorTile);
+                                }
                                 if (tile.tileType == TileType.ENEMY_SPAWN) {
                                     int randEnemyIdx = (int) p.random(enemies.size());
                                     EnemyType enemyType = EnemyType.DIP;
                                     if (tile.name.contains("pooter")) enemyType = EnemyType.POOTER;
                                     else if (tile.name.contains("dip")) enemyType = EnemyType.DIP;
+                                    else if (tile.name.contains("dingle")) enemyType = EnemyType.DINGLE;
                                     Enemy enemy = getEnemy(enemyType);
 
                                     enemy.transform.position.x = tile.getGlobalPosition(room.origin, room.scale).x;
@@ -273,6 +435,13 @@ public class LevelGenerator {
                             line = reader.readLine();
                             y++;
                         }
+
+                        if (room.name.contains("treasure"))
+                            room.roomType = RoomType.TREASURE;
+                        else if (room.name.contains("boss"))
+                            room.roomType = RoomType.BOSS;
+                        else
+                            room.roomType = RoomType.NORMAL;
                         rooms.add(room);
                         j++;
 
@@ -392,7 +561,7 @@ public class LevelGenerator {
 
         for (Vector2 doorLocation : startingDoors) {
             Vector2 origin = decideOriginDirection(doorLocation);
-            Room randomRoom = getRandomEmptyRoom();
+            Room randomRoom = getRandomEmptyRoom(RoomType.NORMAL);
             randomRoom.setOrigin(new Vector2(randomRoom.origin.x + origin.x, randomRoom.origin.y + origin.y));
             roomsOnFloor.add(randomRoom);
         }
@@ -424,7 +593,7 @@ public class LevelGenerator {
             }
 
             Vector2 origin = decideOriginDirection(doors.get(randomDoorIdx));
-            Room randomEmptyRoom = getRandomEmptyRoom();
+            Room randomEmptyRoom = getRandomEmptyRoom(RoomType.NORMAL);
             randomEmptyRoom.setOrigin(new Vector2(randomRoom.origin.x + origin.x, randomRoom.origin.y + origin.y));
 
             doors = randomEmptyRoom.getDoorLocations();
@@ -481,7 +650,7 @@ public class LevelGenerator {
             }
 
             Vector2 origin = decideOriginDirection(doors.get(randomDoorIdx));
-            Room randomEmptyRoom = getRandomEmptyRoom();
+            Room randomEmptyRoom = getRandomEmptyRoom(type);
             randomEmptyRoom.setOrigin(new Vector2(furthestRoom.origin.x + origin.x, furthestRoom.origin.y + origin.y));
             randomEmptyRoom.setRoomType(type);
             roomsOnFloor.add(randomEmptyRoom);
@@ -551,16 +720,26 @@ public class LevelGenerator {
                     Vector2 pos = new Vector2(tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).x, tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).y);
                     item.setPosition(pos);
                     newTile.setItem(item);
-//
-//                    Vector2 newCollisionShapePos = new Vector2 (tile.collisionShape.getPosition());
-//                    newCollisionShapePos.x += tile.textureImage.width * tile.scale.x * 2;
-//                    newCollisionShapePos.y += tile.textureImage.height * tile.scale.y;
-//                    newTile.collisionShape.setPosition(newCollisionShapePos);
+
                     newTile.collisionShape.setSize(new Vector2(newTile.textureImage.width * newTile.scale.x, newTile.textureImage.height * newTile.scale.y));
                     newTile.collisionShape.offsetX = 20;
                     newTile.collisionShape.offsetY = 20;
                     newTile.collisionShape.trigger = true;
                     newTile.collisionShape.setTriggerType(TriggerType.ITEM);
+                }
+
+                if (tile.tileType == TileType.YELLOW_BUTTON) {
+                    Vector2 pos = new Vector2(tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).x, tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).y);
+
+                    newTile.collisionShape.setSize(new Vector2(32 * newTile.scale.x, 29 * newTile.scale.y));
+                    newTile.collisionShape.offsetX = 17;
+                    newTile.collisionShape.offsetY = 17;
+                    newTile.collisionShape.trigger = true;
+                    newTile.collisionShape.setTriggerType(TriggerType.BUTTON);
+                }
+
+                if (tile.tileType == TileType.SPIKES) {
+                    newTile.collisionShape.setTriggerType(TriggerType.SPIKES);
                 }
             }
             if (tile.tileType == TileType.ENEMY_SPAWN) {
@@ -568,9 +747,12 @@ public class LevelGenerator {
                 Enemy newEnemy = new Enemy(enemy, enemy.type);
 //                newEnemy.createCollisionShape();
                 newEnemy.health = enemy.health;
+                newEnemy.transform.scale = new Vector2(enemy.transform.scale.x, enemy.transform.scale.y);
+//                newEnemy.createCollisionShape();
+                newEnemy.spriteBottom.resize(enemy.spriteBottom.width, enemy.spriteBottom.height);
                 newEnemy.transform.position.x = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).x;
                 newEnemy.transform.position.y = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).y;
-
+                newEnemy.collisionShape.setSize(enemy.collisionShape.size);
 
 
                 uniqueRoom.addEnemy(newEnemy);
@@ -612,10 +794,15 @@ public class LevelGenerator {
         return randomRoom;
     }
 
-    private Room getRandomEmptyRoom() {
+    private Room getRandomEmptyRoom(RoomType type) {
         int randomIdx = (int) p.random(rooms.size());
-        Room randomRoom = createUniqueRoom(rooms.get(randomIdx));
-        return randomRoom;
+        Room r = rooms.get(randomIdx);
+        while (r.roomType != type){
+            randomIdx = (int) p.random(rooms.size());
+            r = rooms.get(randomIdx);
+        }
+
+        return createUniqueRoom(r);
     }
 
     private void replaceNotConnectedDoors(Room room) {
