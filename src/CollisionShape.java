@@ -5,7 +5,7 @@ enum CollisionShapeType {
 }
 
 enum TriggerType {
-    DOOR, EMPTY
+    DOOR, EMPTY, ITEM
 }
 
 public class CollisionShape implements Cloneable {
@@ -25,6 +25,9 @@ public class CollisionShape implements Cloneable {
     boolean trigger = false;
     TriggerType triggerType = TriggerType.EMPTY;
     boolean triggered = false;
+    boolean isWall = false;
+
+    float offsetX = 0, offsetY = 0;
 
     private void setBounds() {
         left = position.x;
@@ -48,6 +51,8 @@ public class CollisionShape implements Cloneable {
 
     public void setPosition(Vector2 position) {
         this.position = new Vector2(position);
+        this.position.x += offsetX;
+        this.position.y += offsetY;
         setBounds();
     }
 
@@ -126,6 +131,10 @@ public class CollisionShape implements Cloneable {
             copy.trigger = trigger;
             copy.triggerType = triggerType;
             copy.triggered = triggered;
+            copy.left = left;
+            copy.top = top;
+            copy.right = right;
+            copy.bottom = bottom;
             copy.setBounds();
             return copy;
         } catch (CloneNotSupportedException e) {

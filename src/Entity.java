@@ -62,6 +62,9 @@ public class Entity {
     public float shotSpeed = 2;
     public float luck = 0.0f;
 
+    public boolean flying = false;
+
+
     public Entity(PApplet p, String spritePath) {
         this.p = p;
         this.targetPosition = transform.position;
@@ -251,13 +254,6 @@ public class Entity {
 
     }
 
-    public void move() {
-        // Calculate the new target position based on direction and speed
-//        targetPosition.x += direction.x * speed;
-//        targetPosition.y += direction.y * speed;
-
-//        p.println("pos: ", transform.position.x, transform.position.y,  " target: ", targetPosition.x, targetPosition.y,  " speed: ", speed);
-    }
 
     public void _display() {
 

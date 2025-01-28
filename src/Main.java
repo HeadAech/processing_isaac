@@ -44,13 +44,13 @@ public class Main extends PApplet {
 
     SoundFile basementMusic;
 
-    ArrayList<SoundFile> tearsFireSounds = new ArrayList<>();
-    ArrayList<SoundFile> tearsImpactSounds = new ArrayList<>();
+    SoundManager soundManager;
 
     public void setup(){
         windowTitle("The Binding of Isaac: Retarded");
         frameRate(120);
 //        noSmooth();
+        soundManager = new SoundManager(this);
 
         player = new Player(this, new Vector2((float) width /2, (float) height /2), "data/sprites/spritesheet/isaac_spritesheet.png");
         player.setScale(1.5f);
@@ -65,15 +65,9 @@ public class Main extends PApplet {
 
 //        enemies.add(enemy);
 
+
         basementMusic = new SoundFile(this, "data/music/basement_theme.mp3");
 
-        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_0.mp3"));
-        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_1.mp3"));
-        tearsFireSounds.add(new SoundFile(this, "data/sfx/Tears_Fire_2.mp3"));
-
-        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts0.mp3"));
-        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts1.mp3"));
-        tearsImpactSounds.add(new SoundFile(this, "data/sfx/TearImpacts2.mp3"));
 
         heartsSpritesheet = loadImage("data/sprites/spritesheet/hearts.png");
         ui = new Interface(this, heartsSpritesheet);
@@ -90,12 +84,11 @@ public class Main extends PApplet {
         levelGenerator = new LevelGenerator(this);
         levelGenerator.setPlayer(player);
 
+        levelGenerator.prepareItems();
         levelGenerator.prepareEnemies();
         levelGenerator.prepareTiles();
         levelGenerator.prepareRooms();
-        for(Room room: levelGenerator.rooms) {
-            println(room.name);
-        }
+
         levelGenerator.generateFloor();
         ui.setLevelGenerator(levelGenerator);
 
@@ -104,8 +97,6 @@ public class Main extends PApplet {
 
 
         camera = new Camera(this);
-//        camera.zoom(0.1f);
-//        spawnRocks();
 
         lastFrameTime = millis();
         inputManager = new Input();
@@ -148,8 +139,7 @@ public class Main extends PApplet {
            for (Projectile projectile: projectiles) {
                if (projectile.uuid.equals(uuid)) {
                    projectiles.remove(projectile);
-                   int randomImpactSfx = (int) random(tearsImpactSounds.size());
-                   tearsImpactSounds.get(randomImpactSfx).play();
+                   soundManager.playRandomSound("tear_impact");
                    break;
                }
            }
@@ -157,6 +147,10 @@ public class Main extends PApplet {
 
         Signals.UpdateCollisionShapesForPhysics.connect(data -> {
             updateCollisionShapesForPhysics();
+        });
+
+        Signals.CreateProjectile.connect(projectile -> {
+            projectiles.add(projectile);
         });
 
         updateCollisionShapesForPhysics();
@@ -197,7 +191,7 @@ public class Main extends PApplet {
                 pushMatrix();
                 translate(room.origin.x * room.width * 52 * room.scale.x, room.origin.y * room.height * 52 * room.scale.y);
                 for (Tile tile: room.tiles) {
-                    tile.draw();
+                    tile.draw(deltaTime);
                 }
                 popMatrix();
 
@@ -234,14 +228,13 @@ public class Main extends PApplet {
             Projectile projectile = projectiles.get(i);
             projectile._update();
             physics.checkCollisionForProjectiles(projectile, deltaTime);
-            physics.checkCollisionForProjectileWithEntity(projectile, currentRoom.enemies);
+            physics.checkCollisionForProjectileWithEntity(projectile, currentRoom.enemies, player);
             if (!projectile.checkIfValid()) {
                 if (projectile.destroyStart == 0) projectile.destroyStart = millis();
                 if (millis() - projectile.destroyStart < projectile.destroyEnd) {
                     projectile.onDestroy();
                 } else {
-                    int randomImpactSfx = (int) random(tearsImpactSounds.size());
-                    tearsImpactSounds.get(randomImpactSfx).play();
+                    soundManager.playRandomSound("tear_impact");
                     projectiles.remove(i);  // Remove expired projectile
                 }
             }
@@ -352,8 +345,7 @@ public class Main extends PApplet {
 
             if (projectileDelay > 1/player.firerate) {
                 projectileDelay = 0;
-                int randomTearSfx = (int) random(tearsFireSounds.size());
-                tearsFireSounds.get(randomTearSfx).play();
+                soundManager.playRandomSound("tear_fire");
                 Projectile p = new Projectile(this, new Vector2(player.transform.position.x - (float) player.spriteTop.width /2, player.transform.position.y - (float) player.spriteTop.height /2), pDir);
                 p.damage = player.damage;
                 projectiles.add(p);

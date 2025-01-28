@@ -69,6 +69,16 @@ poop.png
 true
 
 +
-enemy_spawn
+dip_spawn
 floor.png
 false
+
+;
+pooter_spawn
+floor.png
+false
+
+?
+item_pedestal
+item_pedestal.png
+true

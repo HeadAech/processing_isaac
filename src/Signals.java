@@ -22,4 +22,8 @@ public class Signals {
     static Signal<Object> UpdateCollisionShapesForPhysics = new Signal<>();
 
     static Signal<DamageUUID> DamageUUID = new Signal<>();
+
+    static Signal<Projectile> CreateProjectile = new Signal<>();
+
+    static Signal<String> PlaySound = new Signal<>();
 }

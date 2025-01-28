@@ -20,12 +20,22 @@ public class Physics {
                 collision = true;
             }
 
-            if (collision && collisionShape.isTrigger() &&  currentTime >= triggerCooldown) {
-                if (!collisionShape.triggered) {
-                    collisionShape.triggered = true;
-                    Signals.EnteredDoor.emit(collisionShape.position);
-                    currentTime = 0;
+            if (collision && collisionShape.isTrigger() ) {
+                if (currentTime >= triggerCooldown) {
+                    if (collisionShape.triggered) continue;
                     collision = false;
+
+                    if (collisionShape.triggerType == TriggerType.DOOR) {
+                        collisionShape.triggered = true;
+                        Signals.EnteredDoor.emit(collisionShape.position);
+                        currentTime = 0;
+
+                    }
+                    if (collisionShape.triggerType == TriggerType.ITEM) {
+                        collisionShape.triggered = true;
+                        System.out.println("ITEM");
+                        currentTime = 0;
+                    }
                 }
             }
 
@@ -46,6 +56,7 @@ public class Physics {
         ArrayList<CollisionShape> collidingWith = new ArrayList<>();
         for (CollisionShape collisionShape : collisionShapes) {
             boolean collision = false;
+            if (entity.flying && !collisionShape.isWall) continue;
             if (isCollidingWithBoxShape(entity.collisionShape, collisionShape)) {
                 collision = true;
             }
@@ -73,9 +84,9 @@ public class Physics {
         }
     }
 
-    public void checkCollisionForProjectileWithEntity(Projectile projectile, ArrayList<Enemy> entities) {
+    public void checkCollisionForProjectileWithEntity(Projectile projectile, ArrayList<Enemy> entities, Entity player) {
         for (Entity entity : entities) {
-            CollisionShape collisionShape = entity.collisionShape;
+            CollisionShape collisionShape = projectile.canDamagePlayer ? player.collisionShape : entity.collisionShape;
             if (isCollidingWithBoxShape(projectile.collisionShape, collisionShape)) {
                 Signals.ProjectileDestroyed.emit(projectile.uuid);
 //                Signals.ProjectileEnteredCollisionShape.emit(collisionShape.uuid);

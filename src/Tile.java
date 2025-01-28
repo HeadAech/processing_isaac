@@ -13,7 +13,8 @@ enum TileType{
     ROCK,
     POOP,
     ENEMY_SPAWN,
-    DOOR_CLOSED
+    DOOR_CLOSED,
+    ITEM_PEDESTAL
 }
 
 public class Tile implements Cloneable {
@@ -47,18 +48,24 @@ public class Tile implements Cloneable {
 
     float health = 6;
 
+    char character;
+
+    Item item;
+
     Tile(PApplet p, char sign, String name, String spritePath) {
         this.p = p;
         this.name = name;
+        this.character = sign;
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = getTileType(sign);
         createTextureImage();
         onProjectileEnteredCollisionShape();
     }
 
-    Tile (PApplet p, TileType type, String name, String spritePath) {
+    Tile (PApplet p, char sign, TileType type, String name, String spritePath) {
         this.p = p;
         this.name = name;
+        this.character = sign;
         this.spritePath = "data/sprites/" + spritePath;
         this.tileType = type;
         onProjectileEnteredCollisionShape();
@@ -67,6 +74,7 @@ public class Tile implements Cloneable {
     Tile(PApplet p, Tile tile) {
         this.p = p;
         this.name = tile.name;
+        this.character = tile.character;
         this.spritePath = tile.spritePath;
         this.tileType = tile.tileType;
         this.position = tile.position;
@@ -74,6 +82,12 @@ public class Tile implements Cloneable {
         this.textureImage = tile.textureImage;
         createTextureImage();
         onProjectileEnteredCollisionShape();
+    }
+
+    public void setItem(Item item) {
+        if (this.tileType == TileType.ITEM_PEDESTAL) {
+            this.item = item;
+        }
     }
 
     private void onProjectileEnteredCollisionShape() {
@@ -118,6 +132,9 @@ public class Tile implements Cloneable {
         if (tileType == TileType.POOP) {
             this.textureImage.resize(32,32);
             this.destructible = true;
+        }
+        if (tileType == TileType.ITEM_PEDESTAL) {
+            this.textureImage.resize(27,23);
         }
         p.noSmooth();
     }
@@ -177,7 +194,7 @@ public class Tile implements Cloneable {
         }
     }
 
-    public void draw() {
+    public void draw(float deltaTime) {
         p.pushMatrix();
 
         // Translate to the center of the image
@@ -190,7 +207,7 @@ public class Tile implements Cloneable {
         // Set image mode to center to draw the image centered at position
         p.imageMode(PConstants.CENTER);
         // Draw the image, scaling it appropriately
-        if (tileType == TileType.POOP) {
+        if (tileType == TileType.POOP || tileType == TileType.ITEM_PEDESTAL) {
             p.image(textureImage, 0, 0, textureImage.width * scale.x, textureImage.height * scale.y);
         }else {
             p.image(textureImage, 0, 0, width * scale.x, height * scale.y);
@@ -198,6 +215,10 @@ public class Tile implements Cloneable {
 
         // Reset scale (not necessary here since the transformations are done inside the pushMatrix/popMatrix block)
         p.popMatrix();
+
+        if (item != null) {
+            item.draw(deltaTime);
+        }
 
     }
 
@@ -239,7 +260,8 @@ public class Tile implements Cloneable {
             case '.' -> TileType.FLOOR;
             case 'R' -> TileType.ROCK;
             case 'P' -> TileType.POOP;
-            case '+' -> TileType.ENEMY_SPAWN;
+            case '+', ';' -> TileType.ENEMY_SPAWN;
+            case '?' -> TileType.ITEM_PEDESTAL;
             default -> TileType.FLOOR;
         };
     }
@@ -257,6 +279,7 @@ public class Tile implements Cloneable {
             copy.tileType = tileType;
             copy.p = this.p;
             copy.name = this.name;
+            copy.character = this.character;
             copy.spritePath = this.spritePath;
             copy.height = this.height;
             copy.width = this.width;

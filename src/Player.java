@@ -3,6 +3,9 @@ import processing.core.PImage;
 
 public class Player extends Entity {
 
+    float invulnerability = 1.0f;
+    float lastDamageTime = 0.0f;
+
     public Player(PApplet p, String spritePath) {
         super(p, spritePath);
         setPlayerSprite();
@@ -148,6 +151,8 @@ public class Player extends Entity {
         if (direction.x == 0 && direction.y == 0) {
             animatorBottom.playAnimationIfNotPlaying("idle");
         }
+
+        lastDamageTime += deltaTime;
         super._update(deltaTime);
     }
 
@@ -179,6 +184,8 @@ public class Player extends Entity {
     @Override
     public void damage(float damage) {
         if (!alive) return;
+        if (lastDamageTime <= invulnerability) return;
+        lastDamageTime = 0;
         animatorTop.playAnimation("hurt");
         int randomHurt = (int) p.random(hurtSounds.size());
         hurtSounds.get(randomHurt).play();

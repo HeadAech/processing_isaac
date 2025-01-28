@@ -30,6 +30,8 @@ public class Projectile {
 
     CollisionShape collisionShape;
 
+    boolean canDamagePlayer = false;
+
     public Projectile(PApplet p, Vector2 startPosition, Vector2 direction) {
         this.p = p;
         this.transform.position = startPosition;

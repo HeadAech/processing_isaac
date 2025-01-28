@@ -17,6 +17,8 @@ public class LevelGenerator {
 
     ArrayList<Enemy> enemies = new ArrayList<>();
 
+    ArrayList<Item> items = new ArrayList<>();
+
     int maxRoomsOnFloor = 15;
 
     ArrayList<Room> roomsOnFloor = new ArrayList<>();
@@ -32,9 +34,19 @@ public class LevelGenerator {
         this.player = player;
     }
 
+    public void prepareItems() {
+
+        Item bloodOfTheMartyr = new Item(p, new Vector2(0, 0));
+        bloodOfTheMartyr.loadImage("data/sprites/items/blood_of_the_martyr.png");
+        bloodOfTheMartyr.setQuality(3);
+        items.add(bloodOfTheMartyr);
+
+    }
+
     public void prepareEnemies() {
-//        PImage dipSpritesheet = p.loadImage("data/sprites/spritesheet/dip.png");
-        Enemy dip = new Enemy(p, new Vector2(p.width/2 - 100, p.height/2), player, "data/sprites/spritesheet/dip.png");
+
+        //dip
+        Enemy dip = new Enemy(p, new Vector2(p.width/2 - 100, p.height/2), player, "data/sprites/spritesheet/dip.png", EnemyType.DIP);
         dip.createCollisionShape();
         dip.health = 3;
 
@@ -51,6 +63,47 @@ public class LevelGenerator {
 
 
         enemies.add(dip);
+
+        //pooter
+        Enemy pooter = new Enemy(p, new Vector2(0,0), player, "data/sprites/spritesheet/pooter.png", EnemyType.POOTER);
+        pooter.createCollisionShape();
+        pooter.health = 7;
+
+        PImage pooterSprite = p.loadImage("data/sprites/spritesheet/pooter.png");
+
+        Animation pooterIdle = new Animation(p, pooterSprite, pooter.spriteBottom);
+        pooterIdle.setPlayStyle(PlayStyle.PS_LOOP);
+        pooterIdle.addFrame(new Vector2(0, 3));
+        pooterIdle.addFrame(new Vector2(1, 3));
+        pooterIdle.addFrame(new Vector2(2, 3));
+        pooterIdle.addFrame(new Vector2(3, 3));
+        pooterIdle.setDuration(0.02f);
+        pooter.animatorBottom.addAnimation("idle", pooterIdle);
+        pooter.animatorBottom.playAnimation("idle");
+
+        Animation pooterFire = new Animation(p, pooterSprite, pooter.spriteBottom);
+        pooterFire.setPlayStyle(PlayStyle.PS_NORMAL);
+        pooterFire.addFrame(new Vector2(0, 0));
+        pooterFire.addFrame(new Vector2(1, 0));
+        pooterFire.addFrame(new Vector2(2, 0));
+        pooterFire.addFrame(new Vector2(3, 0));
+
+        pooterFire.addFrame(new Vector2(0, 1));
+        pooterFire.addFrame(new Vector2(1, 1));
+        pooterFire.addFrame(new Vector2(2, 1));
+        pooterFire.addFrame(new Vector2(3, 1));
+
+        pooterFire.addFrame(new Vector2(0, 2));
+        pooterFire.addFrame(new Vector2(1, 2));
+        pooterFire.addFrame(new Vector2(2, 2));
+        pooterFire.addFrame(new Vector2(3, 2));
+        pooterFire.setDuration(0.02f);
+
+        pooter.animatorBottom.addAnimation("fire", pooterFire);
+
+
+        enemies.add(pooter);
+
     }
 
     public void prepareTiles() {
@@ -92,6 +145,7 @@ public class LevelGenerator {
 
                 if (i == 4){
                     Tile tile = new Tile(p, sign, name, spritePath);
+
                     tile.collidable = collision;
                     tiles.add(tile);
                     i = 0;
@@ -110,7 +164,7 @@ public class LevelGenerator {
     private Tile getTile(char c) {
         Tile tile = null;
         for (Tile t : tiles) {
-            if (t.tileType == Tile.getTileType(c)) {
+            if (t.character == c) {
                 tile = t;
                 break;
             }
@@ -150,8 +204,19 @@ public class LevelGenerator {
                                         tile.tileType == TileType.DOOR ?
                                                 new Vector2(tile.width, tile.height/2)
                                                 : null;
-                                if (tile.collidable)
+                                if (tile.collidable) {
                                     tile.createCollisionShape(room.origin, null);
+                                    if (tile.tileType == TileType.WALL_LEFT
+                                            || tile.tileType == TileType.WALL_RIGHT
+                                            || tile.tileType == TileType.WALL_BOTTOM
+                                            || tile.tileType == TileType.WALL_TOP
+                                            || tile.tileType == TileType.WALL_CORNER_TOP_LEFT
+                                            || tile.tileType == TileType.WALL_CORNER_TOP_RIGHT
+                                            || tile.tileType == TileType.WALL_CORNER_BOTTOM_LEFT
+                                            || tile.tileType == TileType.WALL_CORNER_BOTTOM_RIGHT) {
+                                        tile.collisionShape.isWall = true;
+                                    }
+                                }
                                 if (tile.tileType == TileType.DOOR) {
                                     float rot = getDoorRotation(tile.position);
                                     tile.setRotation(rot);
@@ -172,12 +237,34 @@ public class LevelGenerator {
                                 }
                                 if (tile.tileType == TileType.ENEMY_SPAWN) {
                                     int randEnemyIdx = (int) p.random(enemies.size());
-                                    Enemy enemy = new Enemy(enemies.get(randEnemyIdx));
-                                    int signX = Integer.signum((int) room.origin.x);
-                                    int signY = Integer.signum((int) room.origin.y);
+                                    EnemyType enemyType = EnemyType.DIP;
+                                    if (tile.name.contains("pooter")) enemyType = EnemyType.POOTER;
+                                    else if (tile.name.contains("dip")) enemyType = EnemyType.DIP;
+                                    Enemy enemy = getEnemy(enemyType);
+
                                     enemy.transform.position.x = tile.getGlobalPosition(room.origin, room.scale).x;
                                     enemy.transform.position.y = tile.getGlobalPosition(room.origin, room.scale).y;
                                     room.addEnemy(enemy);
+                                }
+                                if (tile.tileType == TileType.ITEM_PEDESTAL) {
+                                    tile.collisionShape.setSize(new Vector2(tile.textureImage.width * tile.scale.x, tile.textureImage.height * tile.scale.y));
+                                    Vector2 newCollisionShapePos = tile.collisionShape.getPosition();
+                                    newCollisionShapePos.x += tile.textureImage.width * tile.scale.x * 22;
+                                    newCollisionShapePos.y += tile.textureImage.height * tile.scale.y;
+                                    tile.collisionShape.setPosition(newCollisionShapePos);
+                                    tile.collisionShape.trigger = true;
+                                    tile.collisionShape.setTriggerType(TriggerType.ITEM);
+
+                                    int randomitemIdx = (int) p.random(items.size());
+                                    Item item = items.get(randomitemIdx);
+                                    Vector2 pos = new Vector2(tile.getGlobalPosition(room.origin, room.scale).x, tile.getGlobalPosition(room.origin, room.scale).y);
+                                    item.setPosition(pos);
+                                    tile.setItem(item);
+
+                                    Tile floorTile = new Tile(p, getTile('.'));
+                                    floorTile.setPosition(tile.position);
+                                    room.addTile(floorTile);
+
                                 }
                                 room.addTile(tile);
                                 x++;
@@ -197,6 +284,15 @@ public class LevelGenerator {
             }
         }
 
+    }
+
+    private Enemy getEnemy(EnemyType type) {
+        for (Enemy enemy: enemies) {
+            if (enemy.type == type) {
+                return enemy;
+            }
+        }
+        return null;
     }
 
     private Vector2 pickRandomDoor(ArrayList<Vector2> doorLocations) {
@@ -280,7 +376,7 @@ public class LevelGenerator {
     }
 
     public void generateFloor() {
-        Room startingRoom = getStartingRoom().clone();
+        Room startingRoom = createUniqueRoom(getStartingRoom());
         if (startingRoom == null) {
             return;
         }
@@ -433,23 +529,43 @@ public class LevelGenerator {
         // Create a new Room with unique tiles
         Room uniqueRoom = new Room(p, originalRoom.name);
         uniqueRoom.origin = new Vector2(originalRoom.origin);
+        int enemyIdx = 0;
         for (Tile tile : originalRoom.tiles) {
-            Tile newTile = new Tile(p, tile.tileType, tile.name, tile.spritePath);
+            Tile newTile = new Tile(p, tile.character, tile.tileType, tile.name, tile.spritePath);
             newTile.setPosition(new Vector2(tile.position.x, tile.position.y)); // Clone position
             newTile.setRotation(tile.rotation);
             newTile.collidable = tile.collidable;
             newTile.textureImage = tile.textureImage;
             newTile.destructible = tile.destructible;
             newTile.health = tile.health;
+            if (tile.item != null)
+                newTile.item = new Item(tile.item);
             if (tile.collidable) {
                 newTile.createCollisionShape(uniqueRoom.origin, null);
                 if (tile.tileType == TileType.DOOR) {
                     newTile.collisionShape.setTriggerType(TriggerType.DOOR);
                 }
+                if (tile.tileType == TileType.ITEM_PEDESTAL) {
+                    int randomitemIdx = (int) p.random(items.size());
+                    Item item = new Item(items.get(randomitemIdx));
+                    Vector2 pos = new Vector2(tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).x, tile.getGlobalPosition(uniqueRoom.origin, uniqueRoom.scale).y);
+                    item.setPosition(pos);
+                    newTile.setItem(item);
+//
+//                    Vector2 newCollisionShapePos = new Vector2 (tile.collisionShape.getPosition());
+//                    newCollisionShapePos.x += tile.textureImage.width * tile.scale.x * 2;
+//                    newCollisionShapePos.y += tile.textureImage.height * tile.scale.y;
+//                    newTile.collisionShape.setPosition(newCollisionShapePos);
+                    newTile.collisionShape.setSize(new Vector2(newTile.textureImage.width * newTile.scale.x, newTile.textureImage.height * newTile.scale.y));
+                    newTile.collisionShape.offsetX = 20;
+                    newTile.collisionShape.offsetY = 20;
+                    newTile.collisionShape.trigger = true;
+                    newTile.collisionShape.setTriggerType(TriggerType.ITEM);
+                }
             }
             if (tile.tileType == TileType.ENEMY_SPAWN) {
-                Enemy enemy = originalRoom.enemies.getFirst();
-                Enemy newEnemy = new Enemy(enemy);
+                Enemy enemy = originalRoom.enemies.get(enemyIdx);
+                Enemy newEnemy = new Enemy(enemy, enemy.type);
 //                newEnemy.createCollisionShape();
                 newEnemy.health = enemy.health;
                 newEnemy.transform.position.x = tile.getGlobalPosition(originalRoom.origin, originalRoom.scale).x;
@@ -458,6 +574,7 @@ public class LevelGenerator {
 
 
                 uniqueRoom.addEnemy(newEnemy);
+                enemyIdx++;
             }
 //            uniqueRoom.enemies.clear();
 //            for (Enemy enemy: originalRoom.enemies) {
