@@ -47,7 +47,7 @@ public class Main extends PApplet {
     boolean shouldRestart = false;
 
     public void setup(){
-        windowTitle("The Binding of Isaac: Retarded");
+        windowTitle("The Binding of Isaac");
         frameRate(120);
 //        noSmooth();
         shouldRestart = false;
